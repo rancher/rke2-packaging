@@ -1,0 +1,179 @@
+---
+kind: pipeline
+name: rke2-packaging-centos7-x86_64-amd64
+platform:
+  os: linux
+  arch: amd64
+steps:
+- name: build-rpm-centos7-x86_64-amd64
+  image: rancher/dapper:v0.5.0
+  environment:
+    COMBARCH: x86_64-amd64
+  commands:
+  - dapper -f Dockerfile.centos7.dapper rpm/centos7/scripts/build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+
+- name: sign-rpm-centos7-x86_64-amd64
+  image: centos:7
+  environment:
+    PRIVATE_KEY:
+      from_secret: private_key
+    PRIVATE_KEY_PASS_PHRASE:
+      from_secret: private_key_pass_phrase
+    TESTING_PRIVATE_KEY:
+      from_secret: testing_private_key
+    TESTING_PRIVATE_KEY_PASS_PHRASE:
+      from_secret: testing_private_key_pass_phrase
+  commands:
+  - rpm/centos7/scripts/sign
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+- name: yum-repo-upload-centos7-x86_64-amd64
+  image: centos:7
+  environment:
+    AWS_S3_BUCKET:
+      from_secret: aws_s3_bucket
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    TESTING_AWS_S3_BUCKET:
+      from_secret: testing_aws_s3_bucket
+    TESTING_AWS_ACCESS_KEY_ID:
+      from_secret: testing_aws_access_key_id
+    TESTING_AWS_SECRET_ACCESS_KEY:
+      from_secret: testing_aws_secret_access_key
+    COMBARCH: x86_64-amd64
+  commands:
+  - rpm/centos7/scripts/upload-repo
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+- name: github-release-centos7-x86_64-amd64
+  image: ibuildthecloud/github-release:v0.0.1
+  settings:
+    api_key:
+      from_secret: github_token
+    prerelease: true
+    checksum:
+    - sha256
+    checksum_file: CHECKSUMsum-amd64.txt
+    checksum_flatten: true
+    files:
+    - "dist/centos7/x86_64/*"
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock
+---
+kind: pipeline
+name: rke2-packaging-centos7-srcrpm
+platform:
+  os: linux
+  arch: amd64
+steps:
+- name: build-rpm-centos7-srcrpm
+  image: rancher/dapper:v0.5.0
+  environment:
+    COMBARCH: x86_64-amd64
+  commands:
+  - dapper -f Dockerfile.centos7.dapper rpm/centos7/scripts/build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+
+- name: sign-rpm-centos7-srcrpm
+  image: centos:7
+  environment:
+    PRIVATE_KEY:
+      from_secret: private_key
+    PRIVATE_KEY_PASS_PHRASE:
+      from_secret: private_key_pass_phrase
+    TESTING_PRIVATE_KEY:
+      from_secret: testing_private_key
+    TESTING_PRIVATE_KEY_PASS_PHRASE:
+      from_secret: testing_private_key_pass_phrase
+  commands:
+  - rpm/centos7/scripts/sign
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+- name: yum-repo-upload-centos7-srcrpm
+  image: centos:7
+  environment:
+    AWS_S3_BUCKET:
+      from_secret: aws_s3_bucket
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    TESTING_AWS_S3_BUCKET:
+      from_secret: testing_aws_s3_bucket
+    TESTING_AWS_ACCESS_KEY_ID:
+      from_secret: testing_aws_access_key_id
+    TESTING_AWS_SECRET_ACCESS_KEY:
+      from_secret: testing_aws_secret_access_key
+  commands:
+  - rpm/centos7/scripts/upload-srcrpm-repo
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+- name: github-release-centos7-srcrpm
+  image: ibuildthecloud/github-release:v0.0.1
+  settings:
+    api_key:
+      from_secret: github_token
+    prerelease: true
+    checksum:
+    - sha256
+    checksum_file: CHECKSUMsum-srcrpm.txt
+    checksum_flatten: true
+    files:
+    - "dist/centos7/source/*.src.rpm"
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock

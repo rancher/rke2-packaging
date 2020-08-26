@@ -2,6 +2,7 @@ COMBARCH ?= x86_64-amd64
 ALL_ARCH = x86_64-amd64 aarch64-arm64
 
 CENTOS7_TARGETS := $(addprefix centos7-,$(shell ls rpm/centos7/scripts))
+CENTOS8_TARGETS := $(addprefix centos8-,$(shell ls rpm/centos8/scripts))
 
 .dapper:
 	@echo Downloading dapper
@@ -13,9 +14,17 @@ CENTOS7_TARGETS := $(addprefix centos7-,$(shell ls rpm/centos7/scripts))
 $(CENTOS7_TARGETS): .dapper
 	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos7.dapper $(@:centos7-%=%)
 
+$(CENTOS8_TARGETS): .dapper
+	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos8.dapper $(@:centos8-%=%)
+
 all-centos7-build: $(addprefix sub-centos7-build-,$(ALL_ARCH))
 
 sub-centos7-build-%:
-	$(MAKE) COMBARCH=$* build
+	$(MAKE) COMBARCH=$* centos7-build
 
-.PHONY: $(CENTOS7_TARGETS)
+all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))
+
+sub-centos8-build-%:
+	$(MAKE) COMBARCH=$* centos8-build
+
+.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS)

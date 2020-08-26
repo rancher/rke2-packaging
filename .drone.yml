@@ -195,7 +195,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: sign-rpm-centos8-x86_64-amd64
-  image: centos:8
+  image: centos:7
   environment:
     PRIVATE_KEY:
       from_secret: private_key
@@ -285,7 +285,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: sign-rpm-centos8-srcrpm
-  image: centos:8
+  image: centos:7
   environment:
     PRIVATE_KEY:
       from_secret: private_key

@@ -10,7 +10,7 @@ Source0: rke2-server.service
 Source1: rke2-server.env
 
 BuildRequires: systemd
-Requires(post): rke2-common = %{rpm_version}
+Requires(post): rke2-common = %{rpm_version}-%{rpm_release}%{?dist}
 
 %description
 The Next Generation Rancher Labs Distribution of Kubernetes

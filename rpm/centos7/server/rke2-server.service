@@ -3,6 +3,7 @@ Description=Rancher Kubernetes Engine v2 Server
 Documentation=https://rancher.com
 Wants=network-online.target
 After=network-online.target
+Conflicts=rke2-agent.service
 
 [Install]
 WantedBy=multi-user.target

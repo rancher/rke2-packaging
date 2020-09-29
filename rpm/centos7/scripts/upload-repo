@@ -69,4 +69,4 @@ case "$RPM_CHANNEL" in
     ;;
 esac
 
-rpm-s3 --bucket $AWS_S3_BUCKET -p $TARGET_S3_PATH dist/centos7/$RPMARCH/rke2-*.rpm
+rpm-s3 --bucket $AWS_S3_BUCKET -p $TARGET_S3_PATH --keep 100000 dist/centos7/$RPMARCH/rke2-*.rpm

@@ -4,7 +4,7 @@ set -x
 # This version script expects either a tag of format: <rke2-version>.<channel>.<rpm-release> or no tag at all.
 
 RKE2_POLICYVER=0.1-1 #@TODO: Move this to a more global location.
-RKE2_FALLBACKVER=v1.18.4-alpha15+rke2
+RKE2_FALLBACKVER=v1.18.9-rc2+rke2r1
 
 TREE_STATE=clean
 COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
@@ -57,27 +57,27 @@ if [[ -z "$VERSION" ]]; then
 
     RKE2_VERSION=$VERSION # We can naively assume the latest tag we just pulled is our RKE version.
 
-    rke2_commit_regex="s/\+rke2/-${COMMIT:0:8}${DIRTY}\+rke2/"
+    rke2_commit_regex="s/(\+rke2r[0-9]+)/-${COMMIT:0:8}${DIRTY}\1/"
     VERSION=$(sed -E -e "$rke2_commit_regex" <<<"$VERSION") # Because we are building without a tag, we can assume this is not an official release, so we'll tack the first 8 characters of our commit hash.
     RPM_RELEASE="0" # Set our RPM release to 0.
     
 else # validate the tag format and create our RKE2_VERSION variable
 
-    if ! [[ $TAG =~ ^v[0-9]{1}\.[0-9]{2}\.[0-9]+-*[a-zA-Z0-9]*\+rke2\.[a-z]+\.[0-9]+$ ]]; then
+    if ! [[ $TAG =~ ^v[0-9]{1}\.[0-9]{2}\.[0-9]+-*[a-zA-Z0-9]*\+rke2r[0-9]+\.[a-z]+\.[0-9]+$ ]]; then
         echo "Tag does not match our expected format. Exiting."
         exit 1
     fi
 
-    rke2_version_regex='s/^(v[^-+]*.*\+rke2).*$/\1/;' # will take v1.18.4-alpha9+rke2.testing.0 and provide "1.18.4-alpha9+rke2"
+    rke2_version_regex='s/^(v[^-+]*.*\+rke2r[0-9]+).*$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18.4-alpha9+rke2r1"
 
     RKE2_VERSION=$(sed -E -e "$rke2_version_regex" <<<"$VERSION")
 fi
 
-rke2_rpm_version_regex='s/\-/~/g; s/^v?([^-+]*.*)\+.*$/\1/;' # will take v1.18.4-alpha9+rke2.testing.0 and provide "1.18.4~alpha9"
-rke2_rpm_release_regex='s/^.*\.([0-9]*)$/\1/;' # will take v1.18.4-alpha9+rke2.testing.0 and provide "0"
+rke2_rpm_version_regex='s/\-/~/g; s/\+/~/g; s/^v?([^-+]*.*rke2r[0-9]+)\..*$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18.4~alpha9~rke2r1"
+rke2_rpm_release_regex='s/^.*\.([0-9]*)$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "0"
 
-rke2_rpm_majmin_regex='s/^v([0-9]+.[0-9]*).*/\1/;' # will take v1.18.4-alpha9+rke2.testing.0 and provide "1.18"
-rke2_rpm_channel_regex='s/^.*\.(.*)\.[0-9]+$/\1/;' # will take v1.18.4-alpha9+rke2.testing.0 and provide "testing"
+rke2_rpm_majmin_regex='s/^v([0-9]+.[0-9]*).*/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18"
+rke2_rpm_channel_regex='s/^.*\.(.*)\.[0-9]+$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "testing"
 
 RPM_VERSION=$(sed -E -e "$rke2_rpm_version_regex" <<<"$VERSION")
 RPM_RELEASE=$(sed -E -e "$rke2_rpm_release_regex" <<<"$VERSION")

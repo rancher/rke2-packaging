@@ -31,7 +31,7 @@ install -d %{buildroot}%{_sysconfdir}/rancher/rke2
 install -m 755 -d %{buildroot}%{_sharedstatedir}/rancher/rke2
 install -m 755 -d %{buildroot}%{_localstatedir}/run/k3s
 install -m 755 -t %{buildroot}%{_bindir}/ %{_builddir}/bin/rke2-killall.sh
-install -m 755 -t  %{buildroot}%{_bindir}/ %{_builddir}/bin/rke2-uninstall.sh
+install -m 755 -t %{buildroot}%{_bindir}/ %{_builddir}/bin/rke2-uninstall.sh
 
 %files
 %{_bindir}/rke2
@@ -46,4 +46,6 @@ install -m 755 -t  %{buildroot}%{_bindir}/ %{_builddir}/bin/rke2-uninstall.sh
 %changelog
 
 %preun
-INSTALL_RKE2_ROOT=%{_prefix} /usr/bin/rke2-uninstall.sh
+if [ $1 -eq 0 ]; then
+    INSTALL_RKE2_ROOT=%{_prefix} /usr/bin/rke2-uninstall.sh
+fi

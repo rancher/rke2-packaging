@@ -1,4 +1,5 @@
 %global ARCH.placeholder
+%global __os_install_post %{nil}
 
 Name:    rke2-common
 Version: %{rpm_version}

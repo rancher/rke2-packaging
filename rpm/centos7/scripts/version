@@ -4,7 +4,7 @@ set -x
 # This version script expects either a tag of format: <rke2-version>.<channel>.<rpm-release> or no tag at all.
 
 RKE2_POLICYVER=0.3-1 #@TODO: Move this to a more global location.
-RKE2_FALLBACKVER=v1.18.9-rc2+rke2r1
+RKE2_FALLBACKVER=v1.18.12+rke2r2
 
 TREE_STATE=clean
 COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
@@ -49,10 +49,14 @@ if [[ -z "$VERSION" ]]; then
         exit 1
     fi
 
-    VERSION=$(curl -v https://api.github.com/repos/rancher/rke2/releases | jq -r '[.[] | select(.assets[] | length > 2)][0].tag_name')
-    
-    if [[ -z "$VERSION" ]]; then # Fall back to a known good RKE2 version because we had an error pulling the latest
+    # If our GitHub API Rate Limit remaining is 0, don't even try calling the GitHub API.
+    if [[ $(curl -v https://api.github.com/rate_limit | jq -r '.rate.remaining') = 0 ]]; then
         VERSION=$RKE2_FALLBACKVER
+    else
+        VERSION=$(curl -v https://api.github.com/repos/rancher/rke2/releases | jq -r '[.[] | select(.assets[] | length > 2)][0].tag_name')
+        if [[ -z "$VERSION" ]]; then # Fall back to a known good RKE2 version because we had an error pulling the latest
+            VERSION=$RKE2_FALLBACKVER
+        fi
     fi
 
     RKE2_VERSION=$VERSION # We can naively assume the latest tag we just pulled is our RKE version.

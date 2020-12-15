@@ -48,5 +48,5 @@ install -m 755 -t %{buildroot}%{_bindir}/ %{_builddir}/bin/rke2-uninstall.sh
 
 %preun
 if [ $1 -eq 0 ]; then
-    INSTALL_RKE2_ROOT=%{_prefix} /usr/bin/rke2-uninstall.sh
+    INSTALL_RKE2_ROOT=%{_prefix} /usr/bin/rke2-killall.sh
 fi

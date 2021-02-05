@@ -13,7 +13,6 @@ Source0: https://github.com/rancher/rke2/releases/download/%{rke2_version}/rke2.
 
 BuildRequires: systemd
 Requires(post): rke2-selinux >= %{rke2_policyver}
-Requires: libseccomp >= 2.3
 Requires: iptables
 
 %description

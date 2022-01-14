@@ -375,7 +375,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: sign-rpm-microos-x86_64-amd64
-  image: opensuse/tumbleweed
+  image: centos:7
   environment:
     PRIVATE_KEY:
       from_secret: private_key
@@ -397,7 +397,7 @@ steps:
     - tag
 
 - name: yum-repo-upload-microos-x86_64-amd64
-  image: opensuse/tumbleweed
+  image: centos:7
   environment:
     AWS_S3_BUCKET:
       from_secret: aws_s3_bucket
@@ -465,7 +465,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: sign-rpm-microos-srcrpm
-  image: opensuse/tumbleweed
+  image: centos:7
   environment:
     PRIVATE_KEY:
       from_secret: private_key
@@ -487,7 +487,7 @@ steps:
     - tag
 
 - name: yum-repo-upload-microos-srcrpm
-  image: opensuse/tumbleweed
+  image: centos:7
   environment:
     AWS_S3_BUCKET:
       from_secret: aws_s3_bucket

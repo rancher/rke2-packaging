@@ -1,0 +1,12 @@
+ARG TUMBLEWEED=opensuse/tumbleweed
+FROM ${TUMBLEWEED}
+
+RUN zypper install -y rpm-build git jq rpmdevtools systemd
+
+ENV DAPPER_SOURCE /source
+ENV DAPPER_OUTPUT ./dist
+ENV DAPPER_ENV COMBARCH DRONE_TAG TAG
+ENV HOME ${DAPPER_SOURCE}
+WORKDIR ${DAPPER_SOURCE}
+
+ENTRYPOINT ["./rpm/microos/scripts/entry"]

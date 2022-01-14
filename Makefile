@@ -19,7 +19,7 @@ $(CENTOS8_TARGETS): .dapper
 	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos8.dapper $(@:centos8-%=%)
 
 $(MICROOS_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:centos8-%=%)
+	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:microos-%=%)
 
 all-centos7-build: $(addprefix sub-centos7-build-,$(ALL_ARCH))
 
@@ -36,4 +36,4 @@ all-microos-build: $(addprefix sub-microos-build-,$(ALL_ARCH))
 sub-microos-build-%:
 	$(MAKE) COMBARCH=$* microos-build
 
-.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS)
+.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS) $(MICROOS_TARGETS)

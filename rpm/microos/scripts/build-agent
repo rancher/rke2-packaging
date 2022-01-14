@@ -4,7 +4,7 @@ set -e -x
 cd $(dirname $0)/..
 . ./scripts/version
 
-if [[ -z "$COMBARCH" ]]; then
+if [[ -z "${COMBARCH}" ]]; then
   echo "Combined architecture was not defined, failing build"
   exit 1
 fi

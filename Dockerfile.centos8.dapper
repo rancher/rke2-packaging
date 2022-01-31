@@ -1,6 +1,7 @@
 FROM centos:8
 
-RUN yum install -y epel-release && yum -y install yum-utils rpm-build spectool git jq
+RUN for i in $(ls /etc/yum.repos.d); do sed -i -e "s/mirrorlist.*//g" /etc/yum.repos.d/$i && sed -i -e "s/#baseurl=http:\/\/mirror.centos.org/baseurl=http:\/\/vault.centos.org/g" /etc/yum.repos.d/$i; done && \
+    yum install -y epel-release && yum -y install yum-utils rpm-build spectool git jq
 
 ENV DAPPER_SOURCE /source
 ENV DAPPER_OUTPUT ./dist

@@ -1,5 +1,5 @@
 COMBARCH ?= x86_64-amd64
-ALL_ARCH = x86_64-amd64 aarch64-arm64
+ALL_ARCH = x86_64-amd64
 
 CENTOS7_TARGETS := $(addprefix centos7-,$(shell ls rpm/centos7/scripts))
 CENTOS8_TARGETS := $(addprefix centos8-,$(shell ls rpm/centos8/scripts))

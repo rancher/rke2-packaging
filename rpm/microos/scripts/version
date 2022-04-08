@@ -6,7 +6,7 @@ set -x
 RKE2_POLICYVER=0.3-1 #@TODO: Move this to a more global location.
 RKE2_FALLBACKVER=v1.22.6+rke2r1
 
-TREE_STATE=clean
+TREE_STATE="${TREE_STATE:-clean}"
 COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
 TAG=${TAG:-${DRONE_TAG:-$GITHUB_TAG}}
 

@@ -11,19 +11,18 @@ fi
 
 IFS=- read RPMARCH GOARCH<<< ${COMBARCH}; unset IFS
 
-mkdir -p "/root/rpmbuild/SPECS"
-
-SRC_PATH="/root/rpmbuild/SOURCES/${RPMARCH}"
-mkdir -p ${SRC_PATH}
-
 HOME=/root
+SRC_PATH="${SRC_PATH:-${HOME}/rpmbuild/SOURCES/${RPMARCH}}"
 
-cp -r /source/rpm/centos8/agent/* ${SRC_PATH}
+mkdir -p "/root/rpmbuild/SPECS"
+mkdir -p "${SRC_PATH}"
+
+cp -r /source/rpm/centos8/agent/* "${SRC_PATH}"
 cp -r /source/rpm/centos8/agent/rke2-agent.spec /root/rpmbuild/SPECS
 
-sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" ${SRC_PATH}/rke2-agent.spec
+sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" "${SRC_PATH}/rke2-agent.spec"
 
-cd ${SRC_PATH}
+cd "${SRC_PATH}"
 
 spectool -gf rke2-agent.spec \
     --define "rke2_version ${RKE2_VERSION}" \
@@ -34,8 +33,8 @@ rpmbuild -vv \
     --define "rke2_version ${RKE2_VERSION}" \
     --define "rpm_release ${RPM_RELEASE}" \
     --define "_sourcedir ${SRC_PATH}" \
-    --target ${RPMARCH} \
-    -ba ${SRC_PATH}/rke2-agent.spec
+    --target "${RPMARCH}" \
+    -ba "${SRC_PATH}/rke2-agent.spec"
 
 mkdir -p /source/dist/centos8
 mkdir -p /source/dist/centos8/source

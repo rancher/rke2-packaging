@@ -520,7 +520,7 @@ steps:
     prerelease: true
     checksum:
     - sha256
-    checksum_file: CHECKSUMsum-centos8-srcrpm.txt
+    checksum_file: CHECKSUMsum-microos-srcrpm.txt
     checksum_flatten: true
     files:
     - "dist/microos/source/*.src.rpm"

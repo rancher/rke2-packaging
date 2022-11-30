@@ -3,7 +3,7 @@ set -x
 
 # This version script expects either a tag of format: <rke2-version>.<channel>.<rpm-release> or no tag at all.
 
-RKE2_POLICYVER=0.3-1 #@TODO: Move this to a more global location.
+RKE2_POLICYVER=0.11-1 #@TODO: Move this to a more global location.
 RKE2_FALLBACKVER=v1.22.6+rke2r1
 
 TREE_STATE=clean
@@ -67,7 +67,7 @@ if [[ -z "$VERSION" ]]; then
     
 else # validate the tag format and create our RKE2_VERSION variable
 
-    if ! [[ $TAG =~ ^v[0-9]{1}\.[0-9]{2}\.[0-9]+-*[a-zA-Z0-9]*\+rke2r[0-9]+\.[a-z]+\.[0-9]+$ ]]; then
+    if ! [[ $TAG =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)([-+][a-zA-Z0-9.]+)?[-+](rke2r[0-9]+|dev.*)\.[a-z]+\.[0-9]+$ ]]; then
         echo "Tag does not match our expected format. Exiting."
         exit 1
     fi

@@ -1,5 +1,5 @@
-ARG TUMBLEWEED=opensuse/tumbleweed
-FROM ${TUMBLEWEED}
+ARG OPENSUSE=opensuse/leap:15
+FROM ${OPENSUSE}
 
 RUN zypper install -y rpm-build git jq rpmdevtools systemd
 

@@ -1,0 +1,113 @@
+#!/bin/bash
+set -x
+
+# This version script expects either a tag of format: <rke2-version>.<channel>.<rpm-release> or no tag at all.
+
+RKE2_POLICYVER=0.11-1 #@TODO: Move this to a more global location.
+RKE2_FALLBACKVER=v1.22.6+rke2r1
+
+TREE_STATE=clean
+COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
+TAG=${TAG:-${DRONE_TAG:-$GITHUB_TAG}}
+
+# If we're in a dapperized environment, we should be able to figure out what our current tag and commit are. 
+
+if [ -d ${DAPPER_SOURCE}/.git ]; then
+    pushd ${DAPPER_SOURCE}
+    
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        DIRTY="dirty"
+        TREE_STATE=dirty
+    fi
+    
+    if [[ "$TREE_STATE" == "clean" && -z "$TAG" ]]; then
+        TAG=$(git tag -l --contains HEAD | head -n 1) # this is going to not work if you have multiple tags pointing to the same commit
+    fi
+
+    COMMIT=$(git rev-parse HEAD)
+    if [ -z "$COMMIT" ]; then
+        COMMIT=$(git rev-parse HEAD || true)
+        echo $COMMIT
+        exit 1
+    fi
+    popd
+fi
+
+if [[ -n "$TAG" ]]; then
+    if [[ "$TREE_STATE" = "clean" ]]; then
+        VERSION=$TAG # We will only accept the tag as our version if the tree state is clean and the tag is in fact defined.
+    fi
+fi
+
+# In the event of us doing a build with no corresponding tag that we can discern, we'll go ahead and just build the package assuming we were dealing with master.
+# This means we'll go to GitHub and pull the latest RKE2 release, and parse it to what we are expecting.
+
+if [[ -z "$VERSION" ]]; then
+
+    if [[ -z "$COMMIT" ]]; then # Validate our commit hash to make sure it's actually known, otherwise our version will be off.
+        echo "Unknown commit hash. Exiting."
+        exit 1
+    fi
+
+    # If our GitHub API Rate Limit remaining is 0, don't even try calling the GitHub API.
+    if [[ $(curl -v https://api.github.com/rate_limit | jq -r '.rate.remaining') = 0 ]]; then
+        VERSION=$RKE2_FALLBACKVER
+    else
+        VERSION=$(curl -v https://api.github.com/repos/rancher/rke2/releases | jq -r '[.[] | select(.assets[] | length > 2)][0].tag_name')
+        if [[ -z "$VERSION" ]]; then # Fall back to a known good RKE2 version because we had an error pulling the latest
+            VERSION=$RKE2_FALLBACKVER
+        fi
+    fi
+
+    RKE2_VERSION=$VERSION # We can naively assume the latest tag we just pulled is our RKE version.
+
+    rke2_commit_regex="s/(\+rke2r[0-9]+)/-${COMMIT:0:8}${DIRTY}\1/"
+    VERSION=$(sed -E -e "$rke2_commit_regex" <<<"$VERSION") # Because we are building without a tag, we can assume this is not an official release, so we'll tack the first 8 characters of our commit hash.
+    RPM_RELEASE="0" # Set our RPM release to 0.
+    
+else # validate the tag format and create our RKE2_VERSION variable
+
+    if ! [[ $TAG =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)([-+][a-zA-Z0-9.]+)?[-+](rke2r[0-9]+|dev.*)\.[a-z]+\.[0-9]+$ ]]; then
+        echo "Tag does not match our expected format. Exiting."
+        exit 1
+    fi
+
+    rke2_version_regex='s/^(v[^-+]*.*\+rke2r[0-9]+).*$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18.4-alpha9+rke2r1"
+
+    RKE2_VERSION=$(sed -E -e "$rke2_version_regex" <<<"$VERSION")
+fi
+
+rke2_rpm_version_regex='s/\-/~/g; s/\+/~/g; s/^v?([^-+]*.*rke2r[0-9]+)\..*$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18.4~alpha9~rke2r1"
+rke2_rpm_release_regex='s/^.*\.([0-9]*)$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "0"
+
+rke2_rpm_majmin_regex='s/^v([0-9]+.[0-9]*).*/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "1.18"
+rke2_rpm_channel_regex='s/^.*\.(.*)\.[0-9]+$/\1/;' # will take v1.18.4-alpha9+rke2r1.testing.0 and provide "testing"
+
+RPM_VERSION=$(sed -E -e "$rke2_rpm_version_regex" <<<"$VERSION")
+RPM_RELEASE=$(sed -E -e "$rke2_rpm_release_regex" <<<"$VERSION")
+RPM_MAJMIN=$(sed -E -e "$rke2_rpm_majmin_regex" <<<"$VERSION")
+RPM_CHANNEL=$(sed -E -e "$rke2_rpm_channel_regex" <<<"$VERSION")
+
+if [[ "$RPM_RELEASE" == "$VERSION" ]]; then
+    RPM_RELEASE="0"
+fi
+
+if [[ "$RPM_MAJMIN" == "$VERSION" ]]; then
+    echo "Unknown RPM_MAJMIN found: $RPM_MAJMIN"
+    exit 1
+fi
+
+if [[ "$RPM_CHANNEL" == "$VERSION" ]]; then
+    echo "Unknown RPM_CHANNEL found: $RPM_CHANNEL but defaulting to testing"
+    RPM_CHANNEL="testing"
+fi
+
+case "$RPM_CHANNEL" in
+    "testing"|"latest"|"stable")
+        echo "RPM_CHANNEL matched our expected variants"
+        ;;
+    *)
+        echo "RPM_CHANNEL $RPM_CHANNEL does not match one of: [testing, latest, stable]"
+        exit 1
+        ;;
+esac

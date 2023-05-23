@@ -4,6 +4,7 @@ ALL_ARCH = x86_64-amd64
 CENTOS7_TARGETS := $(addprefix centos7-,$(shell ls rpm/centos7/scripts))
 CENTOS8_TARGETS := $(addprefix centos8-,$(shell ls rpm/centos8/scripts))
 MICROOS_TARGETS := $(addprefix microos-,$(shell ls rpm/microos/scripts))
+SLEMICRO_TARGETS := $(addprefix slemicro-,$(shell ls rpm/slemicro/scripts))
 
 .dapper:
 	@echo Downloading dapper
@@ -21,6 +22,9 @@ $(CENTOS8_TARGETS): .dapper
 $(MICROOS_TARGETS): .dapper
 	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:microos-%=%)
 
+$(SLEMICRO_TARGETS): .dapper
+	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.slemicro.dapper $(@:slemicro-%=%)
+
 all-centos7-build: $(addprefix sub-centos7-build-,$(ALL_ARCH))
 
 sub-centos7-build-%:
@@ -36,4 +40,9 @@ all-microos-build: $(addprefix sub-microos-build-,$(ALL_ARCH))
 sub-microos-build-%:
 	$(MAKE) COMBARCH=$* microos-build
 
-.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS) $(MICROOS_TARGETS)
+all-slemicro-build: $(addprefix sub-slemicro-build-,$(ALL_ARCH))
+
+sub-slemicro-build-%:
+	$(MAKE) COMBARCH=$* slemicro-build
+
+.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS)

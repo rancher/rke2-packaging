@@ -37,6 +37,7 @@ rpmbuild -vv \
     --define "rpm_release ${RPM_RELEASE}" \
     --define "rke2_policyver ${RKE2_POLICYVER}" \
     --define "_sourcedir ${SRC_PATH}" \
+    --define "dist .slemicro" \
     --target ${RPMARCH} \
     -ba ${SRC_PATH}/rke2-common.spec
 

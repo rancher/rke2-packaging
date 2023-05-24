@@ -3,7 +3,7 @@ set -x
 
 # This version script expects either a tag of format: <rke2-version>.<channel>.<rpm-release> or no tag at all.
 
-RKE2_POLICYVER=0.12-5 #@TODO: Move this to a more global location.
+RKE2_POLICYVER=0.12-0 #@TODO: Move this to a more global location.
 RKE2_FALLBACKVER=v1.22.6+rke2r1
 
 TREE_STATE=clean

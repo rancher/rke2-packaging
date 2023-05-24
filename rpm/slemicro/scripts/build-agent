@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e -x
+
+cd $(dirname $0)/..
+. ./scripts/version
+
+if [[ -z "${COMBARCH}" ]]; then
+  echo "Combined architecture was not defined, failing build"
+  exit 1
+fi
+
+IFS=- read RPMARCH GOARCH<<< ${COMBARCH}; unset IFS
+
+mkdir -p "/root/rpmbuild/SPECS"
+
+SRC_PATH="/root/rpmbuild/SOURCES/${RPMARCH}"
+mkdir -p ${SRC_PATH}
+
+HOME=/root
+
+cp -r /source/rpm/slemicro/agent/* ${SRC_PATH}
+cp -r /source/rpm/slemicro/agent/rke2-agent.spec /root/rpmbuild/SPECS
+
+sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" ${SRC_PATH}/rke2-agent.spec
+
+echo "%_topdir /root/rpmbuild" > ~/.rpmmacros
+
+cd ${SRC_PATH}
+
+rpmdev-spectool -gf rke2-agent.spec \
+    --define "rke2_version ${RKE2_VERSION}" \
+    --define "ARCH ${GOARCH}"
+
+rpmbuild -vv \
+    --define "rpm_version ${RPM_VERSION}" \
+    --define "rke2_version ${RKE2_VERSION}" \
+    --define "rpm_release ${RPM_RELEASE}" \
+    --define "_sourcedir ${SRC_PATH}" \
+    --target ${RPMARCH} \
+    -ba ${SRC_PATH}/rke2-agent.spec
+
+ls -R /root/rpmbuild
+
+mkdir -p /source/dist/slemicro
+mkdir -p /source/dist/slemicro/source
+cp -r /root/rpmbuild/RPMS/* /source/dist/slemicro
+cp -r /root/rpmbuild/SRPMS/* /source/dist/slemicro/source

@@ -36,6 +36,7 @@ rpmbuild -vv \
     --define "rke2_version ${RKE2_VERSION}" \
     --define "rpm_release ${RPM_RELEASE}" \
     --define "_sourcedir ${SRC_PATH}" \
+    --define "dist .slemicro" \
     --target ${RPMARCH} \
     -ba ${SRC_PATH}/rke2-server.spec
 

@@ -6,7 +6,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos7-x86_64-amd64
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -65,7 +65,7 @@ steps:
     - tag
 
 - name: github-release-centos7-x86_64-amd64
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -96,7 +96,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos7-srcrpm
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -154,7 +154,7 @@ steps:
     - tag
 
 - name: github-release-centos7-srcrpm
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -185,7 +185,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos8-x86_64-amd64
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -244,7 +244,7 @@ steps:
     - tag
 
 - name: github-release-centos8-x86_64-amd64
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -275,7 +275,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos8-srcrpm
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -333,7 +333,7 @@ steps:
     - tag
 
 - name: github-release-centos8-srcrpm
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -364,7 +364,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos9-x86_64-amd64
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -423,7 +423,7 @@ steps:
     - tag
 
 - name: github-release-centos9-x86_64-amd64
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -454,7 +454,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-centos9-srcrpm
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -512,7 +512,7 @@ steps:
     - tag
 
 - name: github-release-centos9-srcrpm
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -543,7 +543,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-microos-x86_64-amd64
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -602,7 +602,7 @@ steps:
     - tag
 
 - name: github-release-microos-x86_64-amd64
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -633,7 +633,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-microos-srcrpm
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -691,7 +691,7 @@ steps:
     - tag
 
 - name: github-release-microos-srcrpm
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -722,7 +722,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-slemicro-x86_64-amd64
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -781,7 +781,7 @@ steps:
     - tag
 
 - name: github-release-slemicro-x86_64-amd64
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -812,7 +812,7 @@ platform:
   arch: amd64
 steps:
 - name: build-rpm-slemicro-srcrpm
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.6.0
   environment:
     COMBARCH: x86_64-amd64
   commands:
@@ -870,7 +870,7 @@ steps:
     - tag
 
 - name: github-release-slemicro-srcrpm
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token

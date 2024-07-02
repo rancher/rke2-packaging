@@ -1,3 +1,8 @@
+# each distro has 2 pipelines
+# 1- rpms
+# 2- srcrpms
+# each pipeline has 4 steps
+
 ---
 kind: pipeline
 name: rke2-packaging-centos7-x86_64-amd64
@@ -88,6 +93,8 @@ volumes:
 - name: docker
   host:
     path: /var/run/docker.sock
+
+
 ---
 kind: pipeline
 name: rke2-packaging-centos7-srcrpm
@@ -178,6 +185,8 @@ volumes:
   host:
     path: /var/run/docker.sock
 ---
+
+
 kind: pipeline
 name: rke2-packaging-centos8-x86_64-amd64
 platform:
@@ -268,6 +277,8 @@ volumes:
   host:
     path: /var/run/docker.sock
 ---
+
+
 kind: pipeline
 name: rke2-packaging-centos8-srcrpm
 platform:

@@ -8,7 +8,7 @@ RKE2_FALLBACKVER=v1.22.6+rke2r1
 
 TREE_STATE=clean
 COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
-TAG=${TAG:-${DRONE_TAG:-$GITHUB_TAG}}
+TAG=${TAG:-{$GITHUB_TAG}}
 
 # If we're in a dapperized environment, we should be able to figure out what our current tag and commit are. 
 

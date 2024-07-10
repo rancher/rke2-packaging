@@ -21,6 +21,63 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # - name: "Read secrets"
+      #   uses: rancher-eio/read-vault-secrets@main
+      #   with:
+      #     secrets: |
+      #       secret/data/github/repo/${{ github.repository }}/private_key | PRIVATE_KEY ;
+      #       secret/data/github/repo/${{ github.repository }}/private_key_passphrase | PRIVATE_KEY_PASS_PHRASE ;
+      #       secret/data/github/repo/${{ github.repository }}/testing_private_key | TESTING_PRIVATE_KEY ;
+      #       secret/data/github/repo/${{ github.repository }}/testing_private_key_passphrase | TESTING_PRIVATE_KEY_PASS_PHRASE ;
+      #       secret/data/github/repo/${{ github.repository }}/aws_s3_bucket | AWS_S3_BUCKET ;
+      #       secret/data/github/repo/${{ github.repository }}/aws_access_key_id | AWS_ACCESS_KEY_ID ;
+      #       secret/data/github/repo/${{ github.repository }}/aws_secret_access_key | AWS_SECRET_ACCESS_KEY ;
+      #       secret/data/github/repo/${{ github.repository }}/testing_aws_s3_bucket | TESTING_AWS_S3_BUCKET ;
+      #       secret/data/github/repo/${{ github.repository }}/testing_aws_access_key_id | TESTING_AWS_ACCESS_KEY_ID ;
+      #       secret/data/github/repo/${{ github.repository }}/testing_aws_secret_access_key | TESTING_AWS_SECRET_ACCESS_KEY ;
+      - name: "Read secrets"
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
+          TESTING_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
+        run: |
+          echo "PRIVATE_KEY=$PRIVATE_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$PRIVATE_KEY"
+
+          echo "PRIVATE_KEY_PASS_PHRASE=$PRIVATE_KEY_PASS_PHRASE" >> "$GITHUB_ENV"
+          echo "::add-mask::$PRIVATE_KEY_PASS_PHRASE"
+
+          echo "TESTING_PRIVATE_KEY=$TESTING_PRIVATE_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$TESTING_PRIVATE_KEY"
+
+          echo "TESTING_PRIVATE_KEY_PASS_PHRASE=$TESTING_PRIVATE_KEY_PASS_PHRASE" >> "$GITHUB_ENV"
+          echo "::add-mask::$TESTING_PRIVATE_KEY_PASS_PHRASE"
+
+          echo "AWS_S3_BUCKET=$AWS_S3_BUCKET" >> "$GITHUB_ENV"
+          echo "::add-mask::$AWS_S3_BUCKET"
+
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> "$GITHUB_ENV"
+          echo "::add-mask::$AWS_ACCESS_KEY_ID"
+
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$AWS_SECRET_ACCESS_KEY"
+
+          echo "TESTING_AWS_S3_BUCKET=$TESTING_AWS_S3_BUCKET" >> "$GITHUB_ENV"
+          echo "::add-mask::$TESTING_AWS_S3_BUCKET"
+
+          echo "TESTING_AWS_ACCESS_KEY_ID=$TESTING_AWS_ACCESS_KEY_ID" >> "$GITHUB_ENV"
+          echo "::add-mask::$TESTING_AWS_ACCESS_KEY_ID"
+
+          echo "TESTING_AWS_SECRET_ACCESS_KEY=$TESTING_AWS_SECRET_ACCESS_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$TESTING_AWS_SECRET_ACCESS_KEY"
+
       - name: Install Dapper
         run: |
           mkdir -p .local/bin
@@ -31,21 +88,21 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
           COMBARCH: x86_64-amd64
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TESTING_AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          TESTING_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          TESTING_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
         run: |
           dapper -f Dockerfile.${{ matrix.os }}.dapper rpm/${{ matrix.os }}/scripts/build
       - name: Sign
         env:
           TAG: ${{ github.ref_name }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
-          TESTING_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
+          PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
+          PRIVATE_KEY_PASS_PHRASE: ${{ env.PRIVATE_KEY_PASS_PHRASE }}
+          TESTING_PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
+          TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ env.PRIVATE_KEY_PASS_PHRASE }}
         run: |
           docker run --rm \
             -v "$(pwd):/workspace" \
@@ -61,12 +118,12 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
           COMBARCH: x86_64-amd64
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TESTING_AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          TESTING_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          TESTING_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
         run: |
           docker run --rm \
             -v "$(pwd):/workspace" \

@@ -1,0 +1,105 @@
+name: Publish
+on:
+  release:
+    types:
+      - published
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - "centos7"
+          - "centos8"
+          - "centos9"
+          - "microos"
+          - "slemicro"
+        arch:
+          - "x86_64"
+          - "source"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Dapper
+        run: |
+          mkdir -p .local/bin
+          curl -sL https://releases.rancher.com/dapper/latest/dapper-$(uname -s)-$(uname -m) > .local/bin/dapper
+          chmod +x .local/bin/dapper
+          echo ".local/bin" >> $GITHUB_PATH
+      - name: Build
+        env:
+          TAG: ${{ github.ref_name }}
+          COMBARCH: x86_64-amd64
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          dapper -f Dockerfile.${{ matrix.os }}.dapper rpm/${{ matrix.os }}/scripts/build
+      - name: Sign
+        env:
+          TAG: ${{ github.ref_name }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
+          TESTING_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
+        run: |
+          docker run --rm \
+            -v "$(pwd):/workspace" \
+            -w /workspace \
+            -e TAG="$TAG" \
+            -e PRIVATE_KEY="$PRIVATE_KEY" \
+            -e PRIVATE_KEY_PASS_PHRASE="$PRIVATE_KEY_PASS_PHRASE" \
+            -e TESTING_PRIVATE_KEY="$TESTING_PRIVATE_KEY" \
+            -e TESTING_PRIVATE_KEY_PASS_PHRASE="$TESTING_PRIVATE_KEY_PASS_PHRASE" \
+            centos:7 \
+            rpm/${{ matrix.os }}/scripts/sign
+      - name: Upload to S3
+        env:
+          TAG: ${{ github.ref_name }}
+          COMBARCH: x86_64-amd64
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          docker run --rm \
+            -v "$(pwd):/workspace" \
+            -w /workspace \
+            -e TAG="$TAG" \
+            -e COMBARCH="$COMBARCH" \
+            -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+            -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+            -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+            -e TESTING_AWS_S3_BUCKET="$TESTING_AWS_S3_BUCKET" \
+            -e TESTING_AWS_ACCESS_KEY_ID="$TESTING_AWS_ACCESS_KEY_ID" \
+            -e TESTING_AWS_SECRET_ACCESS_KEY="$TESTING_AWS_SECRET_ACCESS_KEY" \
+            centos:7 \
+            rpm/${{ matrix.os }}/scripts/upload-repo
+      - name: Checksum
+        run: |
+          if [ "${{ matrix.arch }}" = "source" ]; then
+            outfile="sha256sum-${{ matrix.os }}-srcrpm.txt"
+          elif [ "${{ matrix.arch }}" = "x86_64" ]; then
+            outfile="sha256sum-${{ matrix.os }}-amd64.txt"
+          else 
+            outfile="sha256sum-${{ matrix.os }}-${{ matrix.arch }}.txt"
+          fi
+
+          cd dist/${{ matrix.os }}/${{ matrix.arch }}
+
+          find *.rpm -type f | while read -r file; do
+            sha256sum "$file" | awk '{print $1 "  " $2}' >> $outfile
+          done
+      - name: Upload to GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OS: ${{ matrix.os }}
+        run: |
+          cd dist/${{ matrix.os }}/${{ matrix.arch }}
+          gh release upload ${{ github.ref_name }} *

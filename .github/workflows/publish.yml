@@ -16,8 +16,8 @@ jobs:
           - "microos"
           - "slemicro"
         arch:
-          - "x86_64"
-          - "source"
+          - "amd64"
+          - "srcrpm"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,23 +83,23 @@ jobs:
             rpm/${{ matrix.os }}/scripts/upload-repo
       - name: Checksum
         run: |
-          if [ "${{ matrix.arch }}" = "source" ]; then
-            outfile="sha256sum-${{ matrix.os }}-srcrpm.txt"
-          elif [ "${{ matrix.arch }}" = "x86_64" ]; then
-            outfile="sha256sum-${{ matrix.os }}-amd64.txt"
-          else 
-            outfile="sha256sum-${{ matrix.os }}-${{ matrix.arch }}.txt"
+          if [ "${{ matrix.arch }}" = "srcrpm" ]; then
+            cd dist/${{ matrix.os }}/source
+          else
+            cd dist/${{ matrix.os }}/x86_64
           fi
-
-          cd dist/${{ matrix.os }}/${{ matrix.arch }}
-
           find *.rpm -type f | while read -r file; do
-            sha256sum "$file" | awk '{print $1 "  " $2}' >> $outfile
+            sha256sum "$file" | awk '{print $1 "  " $2}' >> "sha256sum-${{ matrix.os }}-${{ matrix.arch }}.txt"
           done
       - name: Upload to GitHub
         env:
           GH_TOKEN: ${{ github.token }}
           OS: ${{ matrix.os }}
         run: |
-          cd dist/${{ matrix.os }}/${{ matrix.arch }}
+          if [ "${{ matrix.arch }}" = "srcrpm" ]; then
+            cd dist/${{ matrix.os }}/source
+          else
+            cd dist/${{ matrix.os }}/x86_64
+          fi
+
           gh release upload ${{ github.ref_name }} *

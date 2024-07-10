@@ -48,7 +48,9 @@ jobs:
           TESTING_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ secrets.PRIVATE_KEY_PASS_PHRASE }}
         run: |
-          echo "PRIVATE_KEY=$PRIVATE_KEY" >> "$GITHUB_ENV"
+          echo "PRIVATE_KEY<<EOF
+          $PRIVATE_KEY
+          EOF" >> "$GITHUB_ENV"
           echo "::add-mask::$PRIVATE_KEY"
 
           echo "PRIVATE_KEY_PASS_PHRASE=$PRIVATE_KEY_PASS_PHRASE" >> "$GITHUB_ENV"
@@ -57,7 +59,9 @@ jobs:
           echo "TESTING_PRIVATE_KEY=$TESTING_PRIVATE_KEY" >> "$GITHUB_ENV"
           echo "::add-mask::$TESTING_PRIVATE_KEY"
 
-          echo "TESTING_PRIVATE_KEY_PASS_PHRASE=$TESTING_PRIVATE_KEY_PASS_PHRASE" >> "$GITHUB_ENV"
+          echo "TESTING_PRIVATE_KEY_PASS_PHRASE<<EOF
+          $TESTING_PRIVATE_KEY_PASS_PHRASE
+          EOF" >> "$GITHUB_ENV"
           echo "::add-mask::$TESTING_PRIVATE_KEY_PASS_PHRASE"
 
           echo "AWS_S3_BUCKET=$AWS_S3_BUCKET" >> "$GITHUB_ENV"

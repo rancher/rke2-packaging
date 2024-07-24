@@ -21,6 +21,11 @@ jobs:
         arch:
           - "amd64"
           - "srcrpm"
+        include:
+          - arch: "srcrpm"
+            upload-script: "upload-srcrpm-repo"
+          - arch: "amd64"
+            upload-script: "upload-repo"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,7 +104,7 @@ jobs:
             -e TESTING_AWS_ACCESS_KEY_ID="$TESTING_AWS_ACCESS_KEY_ID" \
             -e TESTING_AWS_SECRET_ACCESS_KEY="$TESTING_AWS_SECRET_ACCESS_KEY" \
             centos:7 \
-            rpm/${{ matrix.os }}/scripts/upload-repo
+            rpm/${{ matrix.os }}/scripts/${{ matrix.upload-script }}
       - name: Checksum
         run: |
           if [ "${{ matrix.arch }}" = "srcrpm" ]; then

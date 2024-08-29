@@ -21,11 +21,17 @@ jobs:
         arch:
           - "amd64"
           - "srcrpm"
+          - "arm64"
         include:
           - arch: "srcrpm"
             upload-script: "upload-srcrpm-repo"
+            build: "x86_64-amd64"
           - arch: "amd64"
             upload-script: "upload-repo"
+            build: "x86_64-amd64"
+          - arch: "arm64"
+            upload-script: "upload-repo"
+            build: "aarch64-arm64"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,7 +60,7 @@ jobs:
       - name: Build
         env:
           TAG: ${{ github.ref_name }}
-          COMBARCH: x86_64-amd64
+          COMBARCH: ${{ matrix.build }}
           AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
@@ -84,7 +90,7 @@ jobs:
       - name: Upload to S3
         env:
           TAG: ${{ github.ref_name }}
-          COMBARCH: x86_64-amd64
+          COMBARCH: ${{ matrix.build }}
           AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
@@ -109,9 +115,12 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" = "srcrpm" ]; then
             cd dist/${{ matrix.os }}/source
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            cd dist/${{ matrix.os }}/aarch64
           else
             cd dist/${{ matrix.os }}/x86_64
           fi
+
           find *.rpm -type f | while read -r file; do
             sha256sum "$file" | awk '{print $1 "  " $2}' >> "sha256sum-${{ matrix.os }}-${{ matrix.arch }}.txt"
           done
@@ -122,6 +131,8 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" = "srcrpm" ]; then
             cd dist/${{ matrix.os }}/source
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            cd dist/${{ matrix.os }}/aarch64
           else
             cd dist/${{ matrix.os }}/x86_64
           fi

@@ -10,6 +10,7 @@ Group:   System Environment/Base
 License: ASL 2.0
 URL:     https://rancher.com
 Source0: https://github.com/rancher/rke2/releases/download/%{rke2_version}/rke2.linux-%{ARCH}.tar.gz
+Source1: 80-rke2.rules
 
 BuildRequires: systemd
 Requires(post): rke2-selinux >= %{rke2_policyver}

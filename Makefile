@@ -3,6 +3,7 @@ ALL_ARCH = x86_64-amd64
 
 CENTOS7_TARGETS := $(addprefix centos7-,$(shell ls rpm/centos7/scripts))
 CENTOS8_TARGETS := $(addprefix centos8-,$(shell ls rpm/centos8/scripts))
+CENTOS9_TARGETS := $(addprefix centos9-,$(shell ls rpm/centos9/scripts))
 MICROOS_TARGETS := $(addprefix microos-,$(shell ls rpm/microos/scripts))
 SLEMICRO_TARGETS := $(addprefix slemicro-,$(shell ls rpm/slemicro/scripts))
 
@@ -18,6 +19,9 @@ $(CENTOS7_TARGETS): .dapper
 
 $(CENTOS8_TARGETS): .dapper
 	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos8.dapper $(@:centos8-%=%)
+
+$(CENTOS9_TARGETS): .dapper
+	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos9.dapper $(@:centos9-%=%)
 
 $(MICROOS_TARGETS): .dapper
 	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:microos-%=%)
@@ -35,6 +39,11 @@ all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))
 sub-centos8-build-%:
 	$(MAKE) COMBARCH=$* centos8-build
 
+all-centos9-build: $(addprefix sub-centos9-build-,$(ALL_ARCH))
+
+sub-centos9-build-%:
+	$(MAKE) COMBARCH=$* centos9-build
+
 all-microos-build: $(addprefix sub-microos-build-,$(ALL_ARCH))
 
 sub-microos-build-%:
@@ -45,4 +54,4 @@ all-slemicro-build: $(addprefix sub-slemicro-build-,$(ALL_ARCH))
 sub-slemicro-build-%:
 	$(MAKE) COMBARCH=$* slemicro-build
 
-.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS)
+.PHONY: $(CENTOS7_TARGETS) $(CENTOS8_TARGETS) $(CENTOS9_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS)

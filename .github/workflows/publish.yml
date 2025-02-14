@@ -24,13 +24,13 @@ jobs:
           - "arm64"
         include:
           - arch: "srcrpm"
-            upload-script: "upload-srcrpm-repo"
+            upload-script: "sign-and-upload"
             build: "x86_64-amd64"
           - arch: "amd64"
-            upload-script: "upload-repo"
+            upload-script: "sign-and-upload"
             build: "x86_64-amd64"
           - arch: "arm64"
-            upload-script: "upload-repo"
+            upload-script: "sign-and-upload"
             build: "aarch64-arm64"
     steps:
       - name: Checkout
@@ -69,28 +69,15 @@ jobs:
           TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.TESTING_AWS_SECRET_ACCESS_KEY }}
         run: |
           dapper -f Dockerfile.${{ matrix.os }}.dapper rpm/${{ matrix.os }}/scripts/build
-      - name: Sign
+      - name: Sign and upload to S3
         env:
           TAG: ${{ github.ref_name }}
+          COMBARCH: ${{ matrix.build }}
+          UPLOAD_ARCH: ${{ matrix.arch }}
           PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
           PRIVATE_KEY_PASS_PHRASE: ${{ env.PRIVATE_KEY_PASS_PHRASE }}
           TESTING_PRIVATE_KEY: ${{ env.TESTING_PRIVATE_KEY }}
           TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ env.TESTING_PRIVATE_KEY_PASS_PHRASE }}
-        run: |
-          docker run --rm \
-            -v "$(pwd):/workspace" \
-            -w /workspace \
-            -e TAG="$TAG" \
-            -e PRIVATE_KEY="$PRIVATE_KEY" \
-            -e PRIVATE_KEY_PASS_PHRASE="$PRIVATE_KEY_PASS_PHRASE" \
-            -e TESTING_PRIVATE_KEY="$TESTING_PRIVATE_KEY" \
-            -e TESTING_PRIVATE_KEY_PASS_PHRASE="$TESTING_PRIVATE_KEY_PASS_PHRASE" \
-            centos:7 \
-            rpm/${{ matrix.os }}/scripts/sign
-      - name: Upload to S3
-        env:
-          TAG: ${{ github.ref_name }}
-          COMBARCH: ${{ matrix.build }}
           AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
@@ -102,14 +89,19 @@ jobs:
             -v "$(pwd):/workspace" \
             -w /workspace \
             -e TAG="$TAG" \
+            -e PRIVATE_KEY="$PRIVATE_KEY" \
+            -e PRIVATE_KEY_PASS_PHRASE="$PRIVATE_KEY_PASS_PHRASE" \
+            -e TESTING_PRIVATE_KEY="$TESTING_PRIVATE_KEY" \
+            -e TESTING_PRIVATE_KEY_PASS_PHRASE="$TESTING_PRIVATE_KEY_PASS_PHRASE" \
             -e COMBARCH="$COMBARCH" \
+            -e UPLOAD_ARCH="$UPLOAD_ARCH"
             -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
             -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             -e TESTING_AWS_S3_BUCKET="$TESTING_AWS_S3_BUCKET" \
             -e TESTING_AWS_ACCESS_KEY_ID="$TESTING_AWS_ACCESS_KEY_ID" \
             -e TESTING_AWS_SECRET_ACCESS_KEY="$TESTING_AWS_SECRET_ACCESS_KEY" \
-            centos:7 \
+            quay.io/centos/centos:stream9 \
             rpm/${{ matrix.os }}/scripts/${{ matrix.upload-script }}
       - name: Checksum
         run: |

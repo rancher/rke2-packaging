@@ -43,7 +43,7 @@ unset IFS
 # Desired TARGET_S3_PATH would be something like rke2/<channel>/centos/7/<arch>
 
 TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/8/$RPMARCH"
-TARGET_RPM_PATH="dist/centos7/$RPMARCH/rke2-*.rpm"
+TARGET_RPM_PATH="dist/centos8/$RPMARCH/rke2-*.rpm"
 
 if [[ "$UPLOAD_ARCH" == "srcrpm" ]]; then
   TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/8/source"

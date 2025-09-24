@@ -1,0 +1,119 @@
+name: Rebuild repodata
+on:
+  workflow_dispatch:
+    inputs:
+      majmin:
+        description: 'rke2 major.minor version (e.g. 1.33)'
+        required: true
+        type: string
+        default: '1.33'
+      channel:
+        description: 'channel to build (latest, testing, stable)'
+        required: true
+        type: choice
+        options:
+          - latest
+          - testing
+          - stable
+        default: 'latest'
+      os:
+        description: 'operating system'
+        required: true
+        type: choice
+        options:
+          - centos7
+          - centos8
+          - centos9
+          - microos
+          - slemicro
+        default: 'centos9'
+      arch:
+        description: 'architecture'
+        required: true
+        type: choice
+        options:
+          - x86_64
+          - aarch64
+          - source
+        default: 'x86_64'
+      skip_upload:
+        description: 'skip S3 upload'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read secrets
+        uses: rancher-eio/read-vault-secrets@main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          secrets: |
+            secret/data/github/repo/${{ github.repository }}/private-key/credentials privateKey | PRIVATE_KEY ;
+            secret/data/github/repo/${{ github.repository }}/private-key-pass-phrase/credentials token | PRIVATE_KEY_PASS_PHRASE ;
+            secret/data/github/repo/${{ github.repository }}/testing-private-key/credentials privateKey | TESTING_PRIVATE_KEY ;
+            secret/data/github/repo/${{ github.repository }}/testing-private-key-pass-phrase/credentials token | TESTING_PRIVATE_KEY_PASS_PHRASE ;
+            secret/data/github/repo/${{ github.repository }}/aws-s3-bucket/credentials token | AWS_S3_BUCKET ;
+            secret/data/github/repo/${{ github.repository }}/aws-access-key-id/credentials token | AWS_ACCESS_KEY_ID ;
+            secret/data/github/repo/${{ github.repository }}/aws-secret-access-key/credentials token | AWS_SECRET_ACCESS_KEY ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-s3-bucket/credentials token | TESTING_AWS_S3_BUCKET ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-access-key-id/credentials token | TESTING_AWS_ACCESS_KEY_ID ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-secret-access-key/credentials token | TESTING_AWS_SECRET_ACCESS_KEY ;
+
+      - name: Rebuild repodata
+        env:
+          RPM_ARCH: ${{ inputs.arch }}
+          RPM_MAJMIN: ${{ inputs.majmin }}
+          RPM_CHANNEL: ${{ inputs.channel }}
+          OS: ${{ inputs.os }}
+          SKIP_UPLOAD: ${{ inputs.skip_upload }}
+          PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
+          PRIVATE_KEY_PASS_PHRASE: ${{ env.PRIVATE_KEY_PASS_PHRASE }}
+          TESTING_PRIVATE_KEY: ${{ env.TESTING_PRIVATE_KEY }}
+          TESTING_PRIVATE_KEY_PASS_PHRASE: ${{ env.TESTING_PRIVATE_KEY_PASS_PHRASE }}
+          AWS_REGION: us-east-1
+          AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          TESTING_AWS_S3_BUCKET: ${{ env.TESTING_AWS_S3_BUCKET }}
+          TESTING_AWS_ACCESS_KEY_ID: ${{ env.TESTING_AWS_ACCESS_KEY_ID }}
+          TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.TESTING_AWS_SECRET_ACCESS_KEY }}
+        run: |
+          docker run \
+            -v "$(pwd):/workspace" \
+            -w /workspace \
+            -e PRIVATE_KEY="${PRIVATE_KEY}" \
+            -e PRIVATE_KEY_PASS_PHRASE="${PRIVATE_KEY_PASS_PHRASE}" \
+            -e TESTING_PRIVATE_KEY="${TESTING_PRIVATE_KEY}" \
+            -e TESTING_PRIVATE_KEY_PASS_PHRASE="${TESTING_PRIVATE_KEY_PASS_PHRASE}" \
+            -e AWS_REGION="${AWS_REGION}" \
+            -e AWS_S3_BUCKET="${AWS_S3_BUCKET}" \
+            -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+            -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+            -e TESTING_AWS_S3_BUCKET="${TESTING_AWS_S3_BUCKET}" \
+            -e TESTING_AWS_ACCESS_KEY_ID="${TESTING_AWS_ACCESS_KEY_ID}" \
+            -e TESTING_AWS_SECRET_ACCESS_KEY="${TESTING_AWS_SECRET_ACCESS_KEY}" \
+            -e RPM_ARCH="${RPM_ARCH}" \
+            -e RPM_MAJMIN="${RPM_MAJMIN}" \
+            -e RPM_CHANNEL="${RPM_CHANNEL}" \
+            -e OS="${OS}" \
+            -e SKIP_UPLOAD="${SKIP_UPLOAD}" \
+            quay.io/centos/centos:stream9 rpm/rebuild-repo
+
+      - name: Upload repodata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repodata-${{ inputs.os }}-${{ inputs.majmin }}-${{ inputs.channel }}-${{ inputs.arch }}
+          path: |
+            dist/*/repodata
+          if-no-files-found: warn

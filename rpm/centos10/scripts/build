@@ -1,0 +1,13 @@
+#!/bin/sh
+set -ex
+
+cd "$(dirname $0)"
+
+if [[ -z "$COMBARCH" ]]; then
+  echo "Combined architecture was not defined, failing build"
+  exit 1
+fi
+
+./build-common
+./build-server
+./build-agent

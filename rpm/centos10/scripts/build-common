@@ -18,8 +18,8 @@ mkdir -p ${SRC_PATH}
 
 HOME=/root
 
-cp -r /source/rpm/centos7/common/* ${SRC_PATH}
-cp -r /source/rpm/centos7/common/rke2-common.spec /root/rpmbuild/SPECS
+cp -r /source/rpm/centos10/common/* ${SRC_PATH}
+cp -r /source/rpm/centos10/common/rke2-common.spec /root/rpmbuild/SPECS
 
 sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" ${SRC_PATH}/rke2-common.spec
 
@@ -38,7 +38,7 @@ rpmbuild -vv \
     --target ${RPMARCH} \
     -ba ${SRC_PATH}/rke2-common.spec
 
-mkdir -p /source/dist/centos7
-mkdir -p /source/dist/centos7/source
-cp -r /root/rpmbuild/RPMS/* /source/dist/centos7
-cp -r /root/rpmbuild/SRPMS/* /source/dist/centos7/source
+mkdir -p /source/dist/centos10
+mkdir -p /source/dist/centos10/source
+cp -r /root/rpmbuild/RPMS/* /source/dist/centos10
+cp -r /root/rpmbuild/SRPMS/* /source/dist/centos10/source

@@ -40,14 +40,14 @@ fi
 IFS=- read RPMARCH GOARCH <<<${COMBARCH}
 unset IFS
 
-# Desired TARGET_S3_PATH would be something like rke2/<channel>/centos/7/<arch>
+# Desired TARGET_S3_PATH would be something like rke2/<channel>/centos/10/<arch>
 
-TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/7/$RPMARCH"
-TARGET_RPM_PATH="dist/centos7/$RPMARCH/rke2-*.rpm"
+TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/10/$RPMARCH"
+TARGET_RPM_PATH="dist/centos10/$RPMARCH/rke2-*.rpm"
 
 if [[ "$UPLOAD_ARCH" == "srcrpm" ]]; then
-  TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/7/source"
-  TARGET_RPM_PATH="dist/centos7/source/rke2-*.src.rpm"
+  TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/centos/10/source"
+  TARGET_RPM_PATH="dist/centos10/source/rke2-*.src.rpm"
 fi
 
 case "$RPM_CHANNEL" in

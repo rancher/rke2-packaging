@@ -44,7 +44,7 @@ esac
 
 expect <<EOF
 set timeout 60
-spawn sh -c "rpmsign --addsign dist/centos7/**/rke2-*.rpm"
+spawn sh -c "rpmsign --addsign dist/centos10/**/rke2-*.rpm"
 expect "Enter pass phrase:"
 send -- "$PRIVATE_KEY_PASS_PHRASE\r"
 expect eof

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUT="${1:?usage: gen-spec-changelog <output-path>}"
+REPO="${DAPPER_SOURCE:-/source}"
+
+RPM_VERSION="${RPM_VERSION:?RPM_VERSION missing}"
+RPM_RELEASE="${RPM_RELEASE:?RPM_RELEASE missing}"
+RKE2_VERSION="${RKE2_VERSION:-}"
+RPM_CHANNEL="${RPM_CHANNEL:-}"
+RPM_MAJMIN="${RPM_MAJMIN:-}"
+COMMIT="${COMMIT:-$(git -C "$REPO" rev-parse --short HEAD || echo unknown)}"
+
+PACKAGER_NAME="${PACKAGER_NAME:-$(git -C "$REPO" config --get user.name || echo Rancher CI)}"
+PACKAGER_EMAIL="${PACKAGER_EMAIL:-$(git -C "$REPO" config --get user.email || echo ci@rancher.com)}"
+PACKAGER="${PACKAGER_NAME} <${PACKAGER_EMAIL}>"
+DATE="$(date "+%a %b %d %Y")"
+
+if [[ -n "${CHANGELOG_RANGE:-}" ]]; then
+  IFS=' ' read -r -a RANGE_ARGS <<<"$CHANGELOG_RANGE"
+elif [[ -n "${TAG:-}" ]]; then
+  prev_tag="$(git -C "$REPO" describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
+  if [[ -n "$prev_tag" ]]; then
+    RANGE_ARGS=("${prev_tag}..${TAG}")
+  else
+    RANGE_ARGS=("${TAG}^..${TAG}")
+  fi
+else
+  last_tag="$(git -C "$REPO" describe --tags --abbrev=0 2>/dev/null || true)"
+  if [[ -n "$last_tag" ]]; then
+    RANGE_ARGS=("${last_tag}..HEAD")
+  else
+    RANGE_ARGS=("-n" "100")
+  fi
+fi
+
+{
+  echo "* ${DATE} ${PACKAGER} - ${RPM_VERSION}-${RPM_RELEASE}"
+  head_line="- RKE2 ${RKE2_VERSION:-unknown} (${COMMIT})"
+  if [[ -n "$RPM_CHANNEL$RPM_MAJMIN" ]]; then
+    head_line="${head_line} [${RPM_CHANNEL:-?}/${RPM_MAJMIN:-?}]"
+  fi
+  echo "$head_line"
+  git -C "$REPO" log "${RANGE_ARGS[@]}" --pretty='format:- %s (%h)' || true
+  echo
+} > "$OUT"
+
+sed -i 's/[\x00-\x1F\x7F]//g' "$OUT"

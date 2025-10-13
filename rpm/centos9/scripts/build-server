@@ -9,7 +9,8 @@ if [[ -z "$COMBARCH" ]]; then
   exit 1
 fi
 
-IFS=- read RPMARCH GOARCH<<< ${COMBARCH}; unset IFS
+IFS=- read RPMARCH GOARCH <<<${COMBARCH}
+unset IFS
 
 mkdir -p "/root/rpmbuild/SPECS"
 
@@ -21,21 +22,28 @@ HOME=/root
 cp -r /source/rpm/centos9/server/* ${SRC_PATH}
 cp -r /source/rpm/centos9/server/rke2-server.spec /root/rpmbuild/SPECS
 
+CHANGELOG_PATH="/root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md"
+touch $CHANGELOG_PATH
+
+. ./scripts/gen-changelog "${CHANGELOG_PATH}"
+
 sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" ${SRC_PATH}/rke2-server.spec
 
 cd ${SRC_PATH}
 
 spectool -gf rke2-server.spec \
-    --define "rke2_version ${RKE2_VERSION}" \
-    --define "ARCH ${GOARCH}"
+  --define "rke2_version ${RKE2_VERSION}" \
+  --define "changelog_path ${CHANGELOG_PATH}" \
+  --define "ARCH ${GOARCH}"
 
 rpmbuild -vv \
-    --define "rpm_version ${RPM_VERSION}" \
-    --define "rke2_version ${RKE2_VERSION}" \
-    --define "rpm_release ${RPM_RELEASE}" \
-    --define "_sourcedir ${SRC_PATH}" \
-    --target ${RPMARCH} \
-    -ba ${SRC_PATH}/rke2-server.spec
+  --define "rpm_version ${RPM_VERSION}" \
+  --define "rke2_version ${RKE2_VERSION}" \
+  --define "rpm_release ${RPM_RELEASE}" \
+  --define "changelog_path ${CHANGELOG_PATH}" \
+  --define "_sourcedir ${SRC_PATH}" \
+  --target ${RPMARCH} \
+  -ba ${SRC_PATH}/rke2-server.spec
 
 mkdir -p /source/dist/centos9
 mkdir -p /source/dist/centos9/source

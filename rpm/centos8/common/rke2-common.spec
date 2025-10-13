@@ -49,6 +49,7 @@ install -m 644 -t %{buildroot}%{_sysconfdir}/fapolicyd/rules.d/ %{_builddir}/80-
 %{_sysconfdir}/fapolicyd/rules.d/80-rke2.rules
 
 %changelog
+%include %{changelog_path}
 
 %preun
 if [ $1 -eq 0 ]; then

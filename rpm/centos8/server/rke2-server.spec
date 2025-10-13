@@ -44,3 +44,4 @@ install -p -m 644 -T %SOURCE1 %{buildroot}%{_sysconfdir}/sysconfig/rke2-server
 %systemd_postun_with_restart rke2-server.service
 
 %changelog
+%include %{changelog_path}

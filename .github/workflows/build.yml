@@ -1,0 +1,66 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+name: Build
+permissions:
+    contents: read
+jobs:
+  build-rpm-el8:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: build-rpm
+      run: |
+        make all-centos8-build
+  build-rpm-el9:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: build-rpm
+      run: |
+        make all-centos9-build
+  build-rpm-el10:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: build-rpm
+      run: |
+        make all-centos10-build
+  build-rpm-slemicro:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: build-rpm
+      run: |
+        make all-slemicro-build
+  build-rpm-microos:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: build-rpm
+      run: |
+        make all-microos-build
+

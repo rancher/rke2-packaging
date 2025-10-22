@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euo pipefail
+
+OUT=$1
+REPO="${DAPPER_SOURCE:-/source}"
+
+PACKAGER_NAME="Rancher CI"
+PACKAGER_EMAIL="ci@rancher.com"
+PACKAGER="${PACKAGER_NAME} <${PACKAGER_EMAIL}>"
+DATE="$(date "+%a %b %d %Y")"
+RANGE_ARGS=()
+
+if [[ -n "${COMMIT}" ]]; then
+  if [[ -n "${TAG}"  ]]; then
+  	if [[ "$RPM_RELEASE" == "0" ]]; then
+      		mapfile -t tag_list < <(git -C "$REPO" tag --list "v${RPM_MAJMIN}.*.${RPM_CHANNEL}.*" 2>/dev/null | sort -V)
+  	else
+      		mapfile -t tag_list < <(git -C "$REPO" tag --list "${RKE2_VERSION}.${RPM_CHANNEL}.*" 2>/dev/null | sort -V)
+  	fi
+
+  	prev_tag=""
+  	for i in "${!tag_list[@]}"; do
+     		if [[ "${tag_list[i]}" == "$TAG" ]]; then
+       			break
+     		fi
+     		prev_tag="${tag_list[i]}"
+  	done
+
+  	echo "Found previous tag: ${prev_tag}"
+
+  	if [[ -n "$prev_tag" ]]; then
+    		RANGE_ARGS=("${prev_tag}..${TAG}")
+	fi
+  fi
+fi
+
+{
+  echo "* ${DATE} ${PACKAGER} - ${RPM_VERSION}.${RPM_CHANNEL}.${RPM_RELEASE}"
+  if [[ -n "${TAG}" ]]; then
+     GIT_OUTPUT="$(git -C "$REPO" log "${RANGE_ARGS[@]}" --no-merges --pretty='format:- %s' 2>/dev/null || true)"
+     printf '%s\n' "$GIT_OUTPUT"
+  else
+     printf '%s\n' "- No changelogs for this version"
+  fi
+} > "$OUT"
+
+sed -i 's/[\x00-\x1F\x7F]//g' "$OUT"
+

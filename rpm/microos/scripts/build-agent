@@ -25,7 +25,7 @@ cp -r /source/rpm/microos/agent/rke2-agent.spec /root/rpmbuild/SPECS
 CHANGELOG_PATH="/root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md"
 touch $CHANGELOG_PATH
 
-. ./scripts/gen-changelog "${CHANGELOG_PATH}"
+. ../gen-changelog "${CHANGELOG_PATH}"
 
 sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" ${SRC_PATH}/rke2-agent.spec
 
@@ -54,3 +54,4 @@ mkdir -p /source/dist/microos
 mkdir -p /source/dist/microos/source
 cp -r /root/rpmbuild/RPMS/* /source/dist/microos
 cp -r /root/rpmbuild/SRPMS/* /source/dist/microos/source
+cp /root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md /source/dist/microos/CHANGELOG_AGENT.md

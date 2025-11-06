@@ -5,6 +5,8 @@ Name:    rke2-common
 Version: %{rpm_version}
 Release: %{rpm_release}%{?dist}
 Summary: RKE2 Common
+Vendor:     SUSE LLC
+Packager:   SUSE LLC <https://www.suse.com/>
 
 Group:   System Environment/Base
 License: ASL 2.0

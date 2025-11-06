@@ -4,6 +4,8 @@ Name:    rke2-agent
 Version: %{rpm_version}
 Release: %{rpm_release}%{?dist}
 Summary: RKE2 Agent
+Vendor:     SUSE LLC
+Packager:   SUSE LLC <https://www.suse.com/>
 
 Group:   System Environment/Base
 License: ASL 2.0

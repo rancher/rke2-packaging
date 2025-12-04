@@ -4,8 +4,8 @@ set -euo pipefail
 OUT=$1
 REPO="${DAPPER_SOURCE:-/source}"
 
-PACKAGER_NAME="Rancher CI"
-PACKAGER_EMAIL="ci@rancher.com"
+PACKAGER_NAME="SUSE LLC"
+PACKAGER_EMAIL="https://www.suse.com/"
 PACKAGER="${PACKAGER_NAME} <${PACKAGER_EMAIL}>"
 DATE="$(date "+%a %b %d %Y")"
 RANGE_ARGS=()

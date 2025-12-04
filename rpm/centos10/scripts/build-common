@@ -22,7 +22,7 @@ HOME=/root
 cp -r /source/rpm/centos10/common/* ${SRC_PATH}
 cp -r /source/rpm/centos10/common/rke2-common.spec /root/rpmbuild/SPECS
 
-CHANGELOG_PATH="/root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md"
+CHANGELOG_PATH="${SRC_PATH}/CHANGELOG.md"
 touch $CHANGELOG_PATH
 
 . ../gen-changelog "${CHANGELOG_PATH}"
@@ -50,4 +50,4 @@ mkdir -p /source/dist/centos10
 mkdir -p /source/dist/centos10/source
 cp -r /root/rpmbuild/RPMS/* /source/dist/centos10
 cp -r /root/rpmbuild/SRPMS/* /source/dist/centos10/source
-cp /root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md /source/dist/centos10/CHANGELOG_COMMON.md
+cp ${CHANGELOG_PATH} /source/dist/centos10/CHANGELOG_COMMON.md

@@ -22,7 +22,7 @@ HOME=/root
 cp -r /source/rpm/slemicro/agent/* ${SRC_PATH}
 cp -r /source/rpm/slemicro/agent/rke2-agent.spec /root/rpmbuild/SPECS
 
-CHANGELOG_PATH="/root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md"
+CHANGELOG_PATH="${SRC_PATH}/CHANGELOG.md"
 touch $CHANGELOG_PATH
 
 . ../gen-changelog "${CHANGELOG_PATH}"
@@ -54,4 +54,4 @@ mkdir -p /source/dist/slemicro
 mkdir -p /source/dist/slemicro/source
 cp -r /root/rpmbuild/RPMS/* /source/dist/slemicro
 cp -r /root/rpmbuild/SRPMS/* /source/dist/slemicro/source
-cp /root/rpmbuild/SOURCES/${RPMARCH}/CHANGELOG.md /source/dist/slemicro/CHANGELOG_AGENT.md
+cp ${CHANGELOG_PATH} /source/dist/slemicro/CHANGELOG_AGENT.md

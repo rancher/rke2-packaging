@@ -9,6 +9,7 @@ PACKAGER_EMAIL="https://www.suse.com/"
 PACKAGER="${PACKAGER_NAME} <${PACKAGER_EMAIL}>"
 DATE="$(date "+%a %b %d %Y")"
 RANGE_ARGS=()
+DEFAULT_CHANGELOGS="- No changelogs for this version"
 
 if [[ -n "${COMMIT}" ]]; then
   if [[ -n "${TAG}"  ]]; then
@@ -37,10 +38,14 @@ fi
 {
   echo "* ${DATE} ${PACKAGER} - ${RPM_VERSION}.${RPM_CHANNEL}.${RPM_RELEASE}"
   if [[ -n "${TAG}" ]]; then
-     GIT_OUTPUT="$(git -C "$REPO" log "${RANGE_ARGS[@]}" --no-merges --pretty='format:- %s' 2>/dev/null || true)"
-     printf '%s\n' "$GIT_OUTPUT"
+    GIT_OUTPUT="$(git -C "$REPO" log "${RANGE_ARGS[@]}" --no-merges --pretty='format:- %s' 2>/dev/null || true)"
+    if [[ -n "$GIT_OUTPUT" ]]; then
+       printf '%s\n' "$GIT_OUTPUT"
+    else
+       printf '%s\n' "${DEFAULT_CHANGELOGS}"
+    fi
   else
-     printf '%s\n' "- No changelogs for this version"
+     printf '%s\n' "${DEFAULT_CHANGELOGS}"
   fi
 } > "$OUT"
 

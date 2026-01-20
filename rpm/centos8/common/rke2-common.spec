@@ -1,5 +1,9 @@
 %global ARCH.placeholder
 %global __os_install_post %{nil}
+%global require_kernel_extra 0
+%if 0%{?rhel} >= 10
+%global require_kernel_extra 1
+%endif
 
 Name:    rke2-common
 Version: %{rpm_version}
@@ -17,6 +21,9 @@ Source1: 80-rke2.rules
 BuildRequires: systemd
 Requires(post): rke2-selinux >= %{rke2_policyver}
 Requires: iptables
+%if %{require_kernel_extra}
+Requires: kernel-modules-extra
+%endif
 
 %description
 The Next Generation Rancher Labs Distribution of Kubernetes

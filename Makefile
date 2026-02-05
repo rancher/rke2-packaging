@@ -34,7 +34,7 @@ $(CENTOS8_TARGETS): centos8-image
 	docker run --rm \
       -e COMBARCH=$(COMBARCH) \
       -e TAG=$(TAG) \
-      -v "$(PWD)/dist:/source/dist" \
+      -v "$(PWD):/source" \
       -w /source \
       $(CENTOS8_IMAGE) $(@:centos8-%=%)
 
@@ -42,7 +42,7 @@ $(CENTOS9_TARGETS): centos9-image
 	docker run --rm \
       -e COMBARCH=$(COMBARCH) \
       -e TAG=$(TAG) \
-      -v "$(PWD)/dist:/source/dist" \
+      -v "$(PWD):/source" \
       -w /source \
       $(CENTOS9_IMAGE) $(@:centos9-%=%)
 
@@ -50,7 +50,7 @@ $(CENTOS10_TARGETS): centos10-image
 	docker run --rm \
       -e COMBARCH=$(COMBARCH) \
       -e TAG=$(TAG) \
-      -v "$(PWD)/dist:/source/dist" \
+      -v "$(PWD):/source" \
       -w /source \
       $(CENTOS10_IMAGE) $(@:centos10-%=%)
 
@@ -58,7 +58,7 @@ $(MICROOS_TARGETS): microos-image
 	docker run --rm \
       -e COMBARCH=$(COMBARCH) \
       -e TAG=$(TAG) \
-      -v "$(PWD)/dist:/source/dist" \
+      -v "$(PWD):/source" \
       -w /source \
       $(MICROOS_IMAGE) $(@:microos-%=%)
 
@@ -66,7 +66,7 @@ $(SLEMICRO_TARGETS): slemicro-image
 	docker run --rm \
       -e COMBARCH=$(COMBARCH) \
       -e TAG=$(TAG) \
-      -v "$(PWD)/dist:/source/dist" \
+      -v "$(PWD):/source" \
       -w /source \
       $(SLEMICRO_IMAGE) $(@:slemicro-%=%)
 

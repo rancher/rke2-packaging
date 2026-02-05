@@ -72,8 +72,7 @@ jobs:
           COMBARCH: ${{ matrix.build }}
         run: |
           docker run --rm \
-            -v "$(pwd)/dist:/source/dist" \
-            -v "$(pwd)/rpm:/source/rpm" \
+            -v "$(pwd):/source" \
             -e TAG="$TAG" \
             -w /source \
             -e COMBARCH="$COMBARCH" \

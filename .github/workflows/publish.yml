@@ -75,6 +75,7 @@ jobs:
             -v "$(pwd)/dist:/source/dist" \
             -v "$(pwd)/rpm:/source/rpm" \
             -e TAG="$TAG" \
+            -w /source \
             -e COMBARCH="$COMBARCH" \
             ${{ matrix.os }}-build-image \
             rpm/${{ matrix.os }}/scripts/build

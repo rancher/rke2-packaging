@@ -3,10 +3,11 @@ FROM quay.io/centos/centos:stream9
 RUN yum install -y epel-release && \
     yum -y install yum-utils rpm-build git jq rpmdevtools systemd
 
-ENV DAPPER_SOURCE /source
-ENV DAPPER_OUTPUT ./dist
-ENV DAPPER_ENV COMBARCH DRONE_TAG TAG
-ENV HOME ${DAPPER_SOURCE}
-WORKDIR ${DAPPER_SOURCE}
+WORKDIR /source
+
+COPY . .
+
+ARG COMBARCH
+ARG TAG
 
 ENTRYPOINT ["./rpm/centos9/scripts/entry"]

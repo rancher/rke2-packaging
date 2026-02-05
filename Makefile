@@ -7,27 +7,68 @@ CENTOS9_TARGETS := $(addprefix centos9-,$(shell ls rpm/centos9/scripts))
 MICROOS_TARGETS := $(addprefix microos-,$(shell ls rpm/microos/scripts))
 SLEMICRO_TARGETS := $(addprefix slemicro-,$(shell ls rpm/slemicro/scripts))
 
-.dapper:
-	@echo Downloading dapper
-	@curl -sL https://releases.rancher.com/dapper/latest/dapper-$$(uname -s)-$$(uname -m) > .dapper.tmp
-	@@chmod +x .dapper.tmp
-	@./.dapper.tmp -v
-	@mv .dapper.tmp .dapper
+CURDIR := $(shell pwd)
 
-$(CENTOS8_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos8.dapper $(@:centos8-%=%)
+CENTOS10_IMAGE = centos10-build-image
+CENTOS9_IMAGE = centos9-build-image
+CENTOS8_IMAGE = centos8-build-image
+MICROOS_IMAGE = microos-build-image
+SLEMICRO_IMAGE = slemicro-build-image
 
-$(CENTOS9_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos9.dapper $(@:centos9-%=%)
+centos10-image:
+	docker buildx build -f Dockerfile.centos10 -t $(CENTOS10_IMAGE) .
 
-$(CENTOS10_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos10.dapper $(@:centos10-%=%)
+centos9-image:
+	docker buildx build -f Dockerfile.centos9 -t $(CENTOS9_IMAGE) .
 
-$(MICROOS_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:microos-%=%)
+centos8-image:
+	docker buildx build -f Dockerfile.centos8 -t $(CENTOS8_IMAGE) .
 
-$(SLEMICRO_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.slemicro.dapper $(@:slemicro-%=%)
+microos-image:
+	docker buildx build -f Dockerfile.microos -t $(MICROOS_IMAGE) .
+
+slemicro-image:
+	docker buildx build -f Dockerfile.slemicro -t $(SLEMICRO_IMAGE) .
+
+$(CENTOS8_TARGETS): centos8-image
+	docker run --rm \
+      -e COMBARCH=$(COMBARCH) \
+      -e TAG=$(TAG) \
+      -v "$(PWD)/dist:/source/dist" \
+      -w /source \
+      $(CENTOS8_IMAGE) $(@:centos8-%=%)
+
+$(CENTOS9_TARGETS): centos9-image
+	docker run --rm \
+      -e COMBARCH=$(COMBARCH) \
+      -e TAG=$(TAG) \
+      -v "$(PWD)/dist:/source/dist" \
+      -w /source \
+      $(CENTOS9_IMAGE) $(@:centos9-%=%)
+
+$(CENTOS10_TARGETS): centos10-image
+	docker run --rm \
+      -e COMBARCH=$(COMBARCH) \
+      -e TAG=$(TAG) \
+      -v "$(PWD)/dist:/source/dist" \
+      -w /source \
+      $(CENTOS10_IMAGE) $(@:centos10-%=%)
+
+$(MICROOS_TARGETS): microos-image
+	docker run --rm \
+      -e COMBARCH=$(COMBARCH) \
+      -e TAG=$(TAG) \
+      -v "$(PWD)/dist:/source/dist" \
+      -w /source \
+      $(MICROOS_IMAGE) $(@:microos-%=%)
+
+$(SLEMICRO_TARGETS): slemicro-image
+	docker run --rm \
+      -e COMBARCH=$(COMBARCH) \
+      -e TAG=$(TAG) \
+      -v "$(PWD)/dist:/source/dist" \
+      -w /source \
+      $(SLEMICRO_IMAGE) $(@:slemicro-%=%)
 
 
 all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))
@@ -55,4 +96,5 @@ all-slemicro-build: $(addprefix sub-slemicro-build-,$(ALL_ARCH))
 sub-slemicro-build-%:
 	$(MAKE) COMBARCH=$* slemicro-build
 
+.PHONY: centos8-image centos9-image centos10-image microos-image slemicro-image
 .PHONY: $(CENTOS10_TARGETS) $(CENTOS8_TARGETS) $(CENTOS9_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS)

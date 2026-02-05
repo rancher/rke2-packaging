@@ -54,12 +54,6 @@ jobs:
             secret/data/github/repo/${{ github.repository }}/testing-aws-s3-bucket/credentials token | TESTING_AWS_S3_BUCKET ;
             secret/data/github/repo/${{ github.repository }}/testing-aws-access-key-id/credentials token | TESTING_AWS_ACCESS_KEY_ID ;
             secret/data/github/repo/${{ github.repository }}/testing-aws-secret-access-key/credentials token | TESTING_AWS_SECRET_ACCESS_KEY ;
-      - name: Install Dapper
-        run: |
-          mkdir -p .local/bin
-          curl -sL https://releases.rancher.com/dapper/latest/dapper-$(uname -s)-$(uname -m) > .local/bin/dapper
-          chmod +x .local/bin/dapper
-          echo ".local/bin" >> $GITHUB_PATH
       - name: Build
         env:
           TAG: ${{ github.ref_name }}
@@ -71,7 +65,19 @@ jobs:
           TESTING_AWS_ACCESS_KEY_ID: ${{ env.TESTING_AWS_ACCESS_KEY_ID }}
           TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.TESTING_AWS_SECRET_ACCESS_KEY }}
         run: |
-          dapper -f Dockerfile.${{ matrix.os }}.dapper rpm/${{ matrix.os }}/scripts/build
+          docker buildx build -f Dockerfile.${{ matrix.os }} -t ${{ matrix.os }}-build-image .
+      - name: Run build
+        env:
+          TAG: ${{ github.ref_name }}
+          COMBARCH: ${{ matrix.build }}
+        run: |
+          docker run --rm \
+            -v "$(pwd)/dist:/source/dist" \
+            -v "$(pwd)/rpm:/source/rpm" \
+            -e TAG="$TAG" \
+            -e COMBARCH="$COMBARCH" \
+            ${{ matrix.os }}-build-image \
+            rpm/${{ matrix.os }}/scripts/build
       - name: Sign and upload to S3
         env:
           TAG: ${{ github.ref_name }}

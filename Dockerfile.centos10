@@ -1,0 +1,13 @@
+FROM quay.io/centos/centos:stream10
+
+RUN dnf install -y epel-release
+RUN dnf -y install yum-utils rpm-build git jq rpmdevtools systemd
+
+WORKDIR /source
+
+COPY . .
+
+ARG COMBARCH
+ARG TAG
+
+ENTRYPOINT ["./rpm/centos10/scripts/entry"]

@@ -1,4 +1,4 @@
-FROM centos:8
+FROM centos:8 AS build
 
 RUN for i in $(ls /etc/yum.repos.d); do \
         sed -i -e "s/mirrorlist.*//g" /etc/yum.repos.d/$i && \
@@ -7,11 +7,19 @@ RUN for i in $(ls /etc/yum.repos.d); do \
     yum install -y epel-release && \
     yum -y install yum-utils rpm-build spectool git jq
 
-WORKDIR /source
+ENV SOURCE=/source
+
+WORKDIR ${SOURCE}
 
 COPY . .
 
 ARG COMBARCH
 ARG TAG
+ARG SCRIPT=build
 
-ENTRYPOINT ["./rpm/centos8/scripts/entry"]
+RUN ${SOURCE}/rpm/centos8/scripts/entry "${SCRIPT}"
+
+FROM scratch AS result
+ENV SOURCE=/source
+
+COPY --from=build ${SOURCE}/dist /dist

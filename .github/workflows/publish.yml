@@ -58,26 +58,14 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
           COMBARCH: ${{ matrix.build }}
-          AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          TESTING_AWS_S3_BUCKET: ${{ env.TESTING_AWS_S3_BUCKET }}
-          TESTING_AWS_ACCESS_KEY_ID: ${{ env.TESTING_AWS_ACCESS_KEY_ID }}
-          TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.TESTING_AWS_SECRET_ACCESS_KEY }}
         run: |
-          docker buildx build -f Dockerfile.${{ matrix.os }} -t ${{ matrix.os }}-build-image .
-      - name: Run build
-        env:
-          TAG: ${{ github.ref_name }}
-          COMBARCH: ${{ matrix.build }}
-        run: |
-          docker run --rm \
-            -v "$(pwd):/source" \
-            -e TAG="$TAG" \
-            -w /source \
-            -e COMBARCH="$COMBARCH" \
-            ${{ matrix.os }}-build-image \
-            rpm/${{ matrix.os }}/scripts/build
+          docker buildx build  \
+            --target result \ 
+            --output=. \
+            --build-arg TAG="$TAG" \
+            --build-arg SCRIPT=build \
+            --build-arg COMBARCH="$COMBARCH" \
+            -f Dockerfile.${{ matrix.os }} .
       - name: Sign and upload to S3
         env:
           TAG: ${{ github.ref_name }}

@@ -1,13 +1,21 @@
-FROM quay.io/centos/centos:stream9
+FROM quay.io/centos/centos:stream9 AS build
 
 RUN yum install -y epel-release && \
     yum -y install yum-utils rpm-build git jq rpmdevtools systemd
 
-WORKDIR /source
+ENV SOURCE=/source
+
+WORKDIR ${SOURCE}
 
 COPY . .
 
 ARG COMBARCH
 ARG TAG
+ARG SCRIPT=build
 
-ENTRYPOINT ["./rpm/centos9/scripts/entry"]
+RUN ${SOURCE}/rpm/centos9/scripts/entry "${SCRIPT}"
+
+FROM scratch AS result
+ENV SOURCE=/source
+
+COPY --from=build ${SOURCE}/dist /dist

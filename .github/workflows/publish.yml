@@ -66,9 +66,9 @@ jobs:
           docker buildx build  \
             --target result \ 
             --output=. \
-            --build-arg TAG="$TAG" \
+            --build-arg TAG="${TAG}" \
             --build-arg SCRIPT=build \
-            --build-arg COMBARCH="$COMBARCH" \
+            --build-arg COMBARCH="${COMBARCH}" \
             -f Dockerfile.${{ matrix.os }} .
       
       - name: Sign and upload to S3

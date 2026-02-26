@@ -37,6 +37,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: "Read secrets"
         uses: rancher-eio/read-vault-secrets@main
@@ -54,24 +57,20 @@ jobs:
             secret/data/github/repo/${{ github.repository }}/testing-aws-s3-bucket/credentials token | TESTING_AWS_S3_BUCKET ;
             secret/data/github/repo/${{ github.repository }}/testing-aws-access-key-id/credentials token | TESTING_AWS_ACCESS_KEY_ID ;
             secret/data/github/repo/${{ github.repository }}/testing-aws-secret-access-key/credentials token | TESTING_AWS_SECRET_ACCESS_KEY ;
-      - name: Install Dapper
-        run: |
-          mkdir -p .local/bin
-          curl -sL https://releases.rancher.com/dapper/latest/dapper-$(uname -s)-$(uname -m) > .local/bin/dapper
-          chmod +x .local/bin/dapper
-          echo ".local/bin" >> $GITHUB_PATH
+      
       - name: Build
         env:
           TAG: ${{ github.ref_name }}
           COMBARCH: ${{ matrix.build }}
-          AWS_S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          TESTING_AWS_S3_BUCKET: ${{ env.TESTING_AWS_S3_BUCKET }}
-          TESTING_AWS_ACCESS_KEY_ID: ${{ env.TESTING_AWS_ACCESS_KEY_ID }}
-          TESTING_AWS_SECRET_ACCESS_KEY: ${{ env.TESTING_AWS_SECRET_ACCESS_KEY }}
         run: |
-          dapper -f Dockerfile.${{ matrix.os }}.dapper rpm/${{ matrix.os }}/scripts/build
+          docker buildx build  \
+            --target result \ 
+            --output=. \
+            --build-arg TAG="${TAG}" \
+            --build-arg SCRIPT=build \
+            --build-arg COMBARCH="${COMBARCH}" \
+            -f Dockerfile.${{ matrix.os }} .
+      
       - name: Sign and upload to S3
         env:
           TAG: ${{ github.ref_name }}
@@ -106,6 +105,7 @@ jobs:
             -e TESTING_AWS_SECRET_ACCESS_KEY="$TESTING_AWS_SECRET_ACCESS_KEY" \
             quay.io/centos/centos:stream9 \
             rpm/${{ matrix.os }}/scripts/${{ matrix.upload-script }}
+      
       - name: Checksum
         run: |
           if [ "${{ matrix.arch }}" = "srcrpm" ]; then
@@ -119,6 +119,7 @@ jobs:
           find *.rpm -type f | while read -r file; do
             sha256sum "$file" | awk '{print $1 "  " $2}' >> "sha256sum-${{ matrix.os }}-${{ matrix.arch }}.txt"
           done
+      
       - name: Upload to GitHub
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,21 @@
+ARG OPENSUSE=opensuse/leap:15
+FROM ${OPENSUSE} AS build
+
+RUN zypper install -y rpm-build git jq rpmdevtools systemd
+
+ENV SOURCE=/source
+
+WORKDIR ${SOURCE}
+
+COPY . .
+
+ARG COMBARCH
+ARG TAG
+ARG SCRIPT=build
+
+RUN ${SOURCE}/rpm/slemicro/scripts/entry "${SCRIPT}"
+
+FROM scratch AS result
+ENV SOURCE=/source
+
+COPY --from=build ${SOURCE}/dist /dist

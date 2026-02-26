@@ -7,28 +7,47 @@ CENTOS9_TARGETS := $(addprefix centos9-,$(shell ls rpm/centos9/scripts))
 MICROOS_TARGETS := $(addprefix microos-,$(shell ls rpm/microos/scripts))
 SLEMICRO_TARGETS := $(addprefix slemicro-,$(shell ls rpm/slemicro/scripts))
 
-.dapper:
-	@echo Downloading dapper
-	@curl -sL https://releases.rancher.com/dapper/latest/dapper-$$(uname -s)-$$(uname -m) > .dapper.tmp
-	@@chmod +x .dapper.tmp
-	@./.dapper.tmp -v
-	@mv .dapper.tmp .dapper
+CURDIR := $(shell pwd)
 
-$(CENTOS8_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos8.dapper $(@:centos8-%=%)
+$(CENTOS10_TARGETS):
+	docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:centos10-%=%)" \
+      -f Dockerfile.centos10 .
 
-$(CENTOS9_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos9.dapper $(@:centos9-%=%)
+$(CENTOS9_TARGETS):
+	docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:centos9-%=%)" \
+      -f Dockerfile.centos9 .
 
-$(CENTOS10_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.centos10.dapper $(@:centos10-%=%)
+$(CENTOS8_TARGETS):
+	docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:centos8-%=%)" \
+      -f Dockerfile.centos8 .
 
-$(MICROOS_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.microos.dapper $(@:microos-%=%)
+$(MICROOS_TARGETS):
+	docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:microos-%=%)" \
+      -f Dockerfile.microos .
 
-$(SLEMICRO_TARGETS): .dapper
-	COMBARCH=${COMBARCH} ./.dapper -f Dockerfile.slemicro.dapper $(@:slemicro-%=%)
-
+$(SLEMICRO_TARGETS):
+	docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:slemicro-%=%)" \
+      -f Dockerfile.slemicro .
 
 all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))
 

@@ -7,30 +7,26 @@ RKE2_POLICYVER=0.12-0 #@TODO: Move this to a more global location.
 RKE2_FALLBACKVER=v1.22.6+rke2r1
 
 TREE_STATE=clean
-COMMIT=${COMMIT:-${DRONE_COMMIT:-${GITHUB_SHA:-unknown}}}
-TAG=${TAG:-${DRONE_TAG:-$GITHUB_TAG}}
+COMMIT=${COMMIT:-${GITHUB_SHA:-unknown}}
+TAG=${TAG:-${GITHUB_TAG}}
+SOURCE=${SOURCE:-/source}
 
-# If we're in a dapperized environment, we should be able to figure out what our current tag and commit are. 
+git config --global --add safe.directory $SOURCE
 
-if [ -d ${DAPPER_SOURCE}/.git ]; then
-    pushd ${DAPPER_SOURCE}
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    DIRTY="dirty"
+    TREE_STATE=dirty
+fi
     
-    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-        DIRTY="dirty"
-        TREE_STATE=dirty
-    fi
-    
-    if [[ "$TREE_STATE" == "clean" && -z "$TAG" ]]; then
-        TAG=$(git tag -l --contains HEAD | head -n 1) # this is going to not work if you have multiple tags pointing to the same commit
-    fi
+if [[ "$TREE_STATE" == "clean" && -z "$TAG" ]]; then
+    TAG=$(git tag -l --contains HEAD | head -n 1) # this is going to not work if you have multiple tags pointing to the same commit
+fi
 
-    COMMIT=$(git rev-parse HEAD)
-    if [ -z "$COMMIT" ]; then
-        COMMIT=$(git rev-parse HEAD || true)
-        echo $COMMIT
-        exit 1
-    fi
-    popd
+COMMIT=$(git rev-parse HEAD)
+if [ -z "$COMMIT" ]; then
+    COMMIT=$(git rev-parse HEAD || true)
+    echo $COMMIT
+    exit 1
 fi
 
 if [[ -n "$TAG" ]]; then

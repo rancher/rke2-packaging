@@ -63,8 +63,8 @@ jobs:
           TAG: ${{ github.ref_name }}
           COMBARCH: ${{ matrix.build }}
         run: |
-          docker buildx build  \
-            --target result \ 
+          docker buildx build \
+            --target result \
             --output=. \
             --build-arg TAG="${TAG}" \
             --build-arg SCRIPT=build \

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 OUT=$1
-REPO="${DAPPER_SOURCE:-/source}"
+REPO="${SOURCE:-/source}"
 
 PACKAGER_NAME="SUSE LLC"
 PACKAGER_EMAIL="https://www.suse.com/"

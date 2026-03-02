@@ -63,8 +63,8 @@ jobs:
           TAG: ${{ github.ref_name }}
           COMBARCH: ${{ matrix.build }}
         run: |
-          docker buildx build  \
-            --target result \ 
+          docker buildx build \
+            --target result \
             --output=. \
             --build-arg TAG="${TAG}" \
             --build-arg SCRIPT=build \
@@ -91,6 +91,7 @@ jobs:
             -v "$(pwd):/workspace" \
             -w /workspace \
             -e TAG="$TAG" \
+            -e SOURCE="/workspace" \
             -e PRIVATE_KEY="$PRIVATE_KEY" \
             -e PRIVATE_KEY_PASS_PHRASE="$PRIVATE_KEY_PASS_PHRASE" \
             -e TESTING_PRIVATE_KEY="$TESTING_PRIVATE_KEY" \

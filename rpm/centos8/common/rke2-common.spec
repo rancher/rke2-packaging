@@ -22,7 +22,7 @@ BuildRequires: systemd
 Requires(post): rke2-selinux >= %{rke2_policyver}
 Requires: iptables
 %if %{require_kernel_extra}
-Requires: kernel-modules-extra%{?_isa}
+Requires: (kernel-modules-extra%{?_isa} or kernel-uek-modules-extra%{?_isa})
 %endif
 
 %description

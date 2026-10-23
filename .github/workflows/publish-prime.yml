@@ -1,0 +1,27 @@
+name: Publish Prime
+on:
+  push:
+    tags:
+      # + is a filter quantifier, it has to be escaped to match the literal +
+      - 'v*\+rke2r*.latest.[0-9]*'
+      - 'v*\+rke2r*.stable.[0-9]*'
+      - 'v*\+rke2r*.testing.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'packaging tag to publish to Prime (e.g. v1.33.1+rke2r1.latest.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    uses: ./.github/workflows/publish-rpm.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+      repository: prime
+      release-assets: false
+    secrets: inherit

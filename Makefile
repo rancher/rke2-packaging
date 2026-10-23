@@ -1,4 +1,5 @@
 COMBARCH ?= x86_64-amd64
+RPM_REPOSITORY ?= community
 ALL_ARCH = x86_64-amd64
 .RECIPEPREFIX := >
 
@@ -18,6 +19,7 @@ $(CENTOS10_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:centos10-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.centos10 .
 
 $(CENTOS9_TARGETS):
@@ -26,6 +28,7 @@ $(CENTOS9_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:centos9-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.centos9 .
 
 $(CENTOS8_TARGETS):
@@ -34,6 +37,7 @@ $(CENTOS8_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:centos8-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.centos8 .
 
 $(MICROOS_TARGETS):
@@ -42,6 +46,7 @@ $(MICROOS_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:microos-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.microos .
 
 $(SLEMICRO_TARGETS):
@@ -50,6 +55,7 @@ $(SLEMICRO_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:slemicro-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.slemicro .
 
 $(SLE_TARGETS):
@@ -58,6 +64,7 @@ $(SLE_TARGETS):
       --build-arg "COMBARCH=$(COMBARCH)" \
       --build-arg "TAG=$(TAG)" \
       --build-arg "SCRIPT=$(@:sle-%=%)" \
+      --build-arg "RPM_REPOSITORY=$(RPM_REPOSITORY)" \
       -f Dockerfile.sle .
 
 all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))

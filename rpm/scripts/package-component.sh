@@ -8,6 +8,11 @@ case "$component" in
   common | server | agent) ;;
   *) echo "Invalid RPM component: $component" >&2; exit 1 ;;
 esac
+case "${RPM_REPOSITORY:-community}" in
+  community) RKE2_ASSET_BASE=https://github.com/rancher/rke2/releases/download ;;
+  prime) RKE2_ASSET_BASE=https://prime.ribs.rancher.io/rke2 ;;
+  *) echo "RPM_REPOSITORY must be community or prime, got: $RPM_REPOSITORY" >&2; exit 1 ;;
+esac
 . "$SCRIPTS/version.sh"
 
 # Overrideable for local/offline testing; production retains the original topdir.
@@ -20,6 +25,12 @@ cp -r "$SPEC_PATH/"* "$SRC_PATH/"
 CHANGELOG_PATH="$SRC_PATH/CHANGELOG.md"
 . "$SCRIPTS/gen-changelog.sh" "$CHANGELOG_PATH"
 sed -i "s/\%global ARCH.*/\%global ARCH ${GOARCH}/" "$SRC_PATH/$SPEC"
+sed -i "s|https://github.com/rancher/rke2/releases/download/|$RKE2_ASSET_BASE/|" "$SRC_PATH/$SPEC"
+if [[ "${RPM_REPOSITORY:-community}" == prime ]]; then
+  # Prime only serves the version path URL encoded (+ -> %2B), %% keeps rpm
+  # from expanding it as a macro.
+  sed -i "s|$RKE2_ASSET_BASE/%{rke2_version}/|$RKE2_ASSET_BASE/${RKE2_VERSION//+/%%2B}/|" "$SRC_PATH/$SPEC"
+fi
 cp "$SRC_PATH/$SPEC" "$RPM_TOPDIR/SPECS/"
 
 cd "$SRC_PATH"

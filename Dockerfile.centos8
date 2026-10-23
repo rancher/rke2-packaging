@@ -15,6 +15,7 @@ COPY . .
 
 ARG COMBARCH
 ARG TAG
+ARG RPM_REPOSITORY=community
 ARG SCRIPT=build
 
 RUN bash ${SOURCE}/rpm/scripts/entry.sh "${SCRIPT}"

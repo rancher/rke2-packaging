@@ -2,6 +2,7 @@
 set -euo pipefail
 SCRIPTS=$(cd "$(dirname "$0")" && pwd)
 . "$SCRIPTS/config.sh"
+. "$SCRIPTS/repository-routing.sh"
 rpm_architecture
 
 # The upload container is CentOS for every target OS, not the build image.
@@ -55,7 +56,4 @@ wget -q https://raw.githubusercontent.com/rancher/ecm-distro-tools/master/bin/rp
 echo "${RPM_TOOLING_SHA256}  rpm_tooling" | sha256sum -c -
 chmod +x rpm_tooling
 mv ./rpm_tooling /usr/bin
-rpm_tooling --bucket "$AWS_S3_BUCKET/$TARGET_S3_PATH" --sign \
-  --sign-pass "$PRIVATE_KEY_PASS_PHRASE" \
-  --aws-access-key "$AWS_ACCESS_KEY_ID" --aws-secret-key "$AWS_SECRET_ACCESS_KEY" \
-  $TARGET_RPM_PATH
+upload_rpm_repositories

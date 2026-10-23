@@ -7,15 +7,14 @@ case "${RPM_OS:-}" in
     RPM_DIST=
     RPM_SPECTOOL=spectool
     ;;
-  microos | slemicro)
+  microos | slemicro | sle)
     RPM_SPEC_OS=$RPM_OS
     RPM_REPO_OS=$RPM_OS
-    RPM_DIST=.sle
-    if [[ "$RPM_OS" == slemicro ]]; then RPM_DIST=.slemicro; fi
+    RPM_DIST=.$RPM_OS
     RPM_SPECTOOL=rpmdev-spectool
     ;;
   *)
-    echo "RPM_OS must be centos8, centos9, centos10, microos, or slemicro, got: ${RPM_OS:-<unset>}" >&2
+    echo "RPM_OS must be centos8, centos9, centos10, microos, slemicro, or sle, got: ${RPM_OS:-<unset>}" >&2
     return 1
     ;;
 esac

@@ -8,6 +8,7 @@ CENTOS8_TARGETS := $(addprefix centos8-,$(RPM_SCRIPTS))
 CENTOS9_TARGETS := $(addprefix centos9-,$(RPM_SCRIPTS))
 MICROOS_TARGETS := $(addprefix microos-,$(RPM_SCRIPTS))
 SLEMICRO_TARGETS := $(addprefix slemicro-,$(RPM_SCRIPTS))
+SLE_TARGETS := $(addprefix sle-,$(RPM_SCRIPTS))
 
 CURDIR := $(shell pwd)
 
@@ -51,6 +52,14 @@ $(SLEMICRO_TARGETS):
       --build-arg "SCRIPT=$(@:slemicro-%=%)" \
       -f Dockerfile.slemicro .
 
+$(SLE_TARGETS):
+>docker buildx build \
+      --target result --output=. \
+      --build-arg "COMBARCH=$(COMBARCH)" \
+      --build-arg "TAG=$(TAG)" \
+      --build-arg "SCRIPT=$(@:sle-%=%)" \
+      -f Dockerfile.sle .
+
 all-centos8-build: $(addprefix sub-centos8-build-,$(ALL_ARCH))
 
 sub-centos8-build-%:
@@ -76,4 +85,9 @@ all-slemicro-build: $(addprefix sub-slemicro-build-,$(ALL_ARCH))
 sub-slemicro-build-%:
 >$(MAKE) COMBARCH=$* slemicro-build
 
-.PHONY: $(CENTOS10_TARGETS) $(CENTOS8_TARGETS) $(CENTOS9_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS)
+all-sle-build: $(addprefix sub-sle-build-,$(ALL_ARCH))
+
+sub-sle-build-%:
+>$(MAKE) COMBARCH=$* sle-build
+
+.PHONY: $(CENTOS10_TARGETS) $(CENTOS8_TARGETS) $(CENTOS9_TARGETS) $(MICROOS_TARGETS) $(SLEMICRO_TARGETS) $(SLE_TARGETS)

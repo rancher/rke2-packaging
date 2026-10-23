@@ -24,13 +24,10 @@ jobs:
           - "arm64"
         include:
           - arch: "srcrpm"
-            upload-script: "sign-and-upload"
             build: "x86_64-amd64"
           - arch: "amd64"
-            upload-script: "sign-and-upload"
             build: "x86_64-amd64"
           - arch: "arm64"
-            upload-script: "sign-and-upload"
             build: "aarch64-arm64"
     steps:
       - name: Checkout
@@ -104,8 +101,9 @@ jobs:
             -e TESTING_AWS_S3_BUCKET="$TESTING_AWS_S3_BUCKET" \
             -e TESTING_AWS_ACCESS_KEY_ID="$TESTING_AWS_ACCESS_KEY_ID" \
             -e TESTING_AWS_SECRET_ACCESS_KEY="$TESTING_AWS_SECRET_ACCESS_KEY" \
+            -e RPM_OS="${{ matrix.os }}" \
             quay.io/centos/centos:stream9 \
-            rpm/${{ matrix.os }}/scripts/${{ matrix.upload-script }}
+            bash rpm/scripts/sign-and-upload.sh
       
       - name: Checksum
         run: |

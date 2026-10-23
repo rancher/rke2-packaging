@@ -108,7 +108,7 @@ jobs:
             -e RPM_CHANNEL="${RPM_CHANNEL}" \
             -e OS="${OS}" \
             -e SKIP_UPLOAD="${SKIP_UPLOAD}" \
-            quay.io/centos/centos:stream9 rpm/rebuild-repo
+            quay.io/centos/centos:stream9 rpm/scripts/rebuild-repo.sh
 
       - name: Upload repodata artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

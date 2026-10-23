@@ -7,7 +7,7 @@ RUN for i in $(ls /etc/yum.repos.d); do \
     yum install -y epel-release && \
     yum -y install yum-utils rpm-build spectool git jq
 
-ENV SOURCE=/source
+ENV SOURCE=/source RPM_OS=centos8
 
 WORKDIR ${SOURCE}
 
@@ -17,7 +17,7 @@ ARG COMBARCH
 ARG TAG
 ARG SCRIPT=build
 
-RUN ${SOURCE}/rpm/centos8/scripts/entry "${SCRIPT}"
+RUN bash ${SOURCE}/rpm/scripts/entry.sh "${SCRIPT}"
 
 FROM scratch AS result
 ENV SOURCE=/source

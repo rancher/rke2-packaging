@@ -3,7 +3,7 @@ FROM ${OPENSUSE} AS build
 
 RUN zypper install -y rpm-build git jq rpmdevtools systemd
 
-ENV SOURCE=/source
+ENV SOURCE=/source RPM_OS=microos
 
 WORKDIR ${SOURCE}
 
@@ -13,7 +13,7 @@ ARG COMBARCH
 ARG TAG
 ARG SCRIPT=build
 
-RUN ${SOURCE}/rpm/microos/scripts/entry "${SCRIPT}"
+RUN bash ${SOURCE}/rpm/scripts/entry.sh "${SCRIPT}"
 
 FROM scratch AS result
 ENV SOURCE=/source

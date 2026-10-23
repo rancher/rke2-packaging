@@ -3,7 +3,7 @@ FROM quay.io/centos/centos:stream10 AS build
 RUN dnf install -y epel-release
 RUN dnf -y install yum-utils rpm-build git jq rpmdevtools systemd
 
-ENV SOURCE=/source
+ENV SOURCE=/source RPM_OS=centos10
 
 WORKDIR ${SOURCE}
 
@@ -13,7 +13,7 @@ ARG COMBARCH
 ARG TAG
 ARG SCRIPT=build
 
-RUN ${SOURCE}/rpm/centos10/scripts/entry "${SCRIPT}"
+RUN bash ${SOURCE}/rpm/scripts/entry.sh "${SCRIPT}"
 
 FROM scratch AS result
 ENV SOURCE=/source

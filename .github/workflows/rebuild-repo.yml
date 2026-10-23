@@ -21,21 +21,28 @@ on:
         required: true
         type: choice
         options:
-          - centos7
           - centos8
           - centos9
+          - centos10
           - microos
           - slemicro
+          - sle
         default: 'centos9'
       arch:
         description: 'architecture'
         required: true
         type: choice
         options:
+          - all
           - x86_64
           - aarch64
           - source
-        default: 'x86_64'
+        default: 'all'
+      prime:
+        description: 'rebuild the <os>/<arch>/prime repo instead'
+        required: false
+        type: boolean
+        default: false
       skip_upload:
         description: 'skip S3 upload'
         required: false
@@ -45,6 +52,10 @@ on:
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: rebuild-repo-${{ inputs.channel }}-${{ inputs.majmin }}-${{ inputs.os }}
+  cancel-in-progress: false
 
 jobs:
   rebuild:
@@ -76,6 +87,7 @@ jobs:
           RPM_MAJMIN: ${{ inputs.majmin }}
           RPM_CHANNEL: ${{ inputs.channel }}
           OS: ${{ inputs.os }}
+          PRIME: ${{ inputs.prime }}
           SKIP_UPLOAD: ${{ inputs.skip_upload }}
           PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
           PRIVATE_KEY_PASS_PHRASE: ${{ env.PRIVATE_KEY_PASS_PHRASE }}
@@ -107,6 +119,7 @@ jobs:
             -e RPM_MAJMIN="${RPM_MAJMIN}" \
             -e RPM_CHANNEL="${RPM_CHANNEL}" \
             -e OS="${OS}" \
+            -e PRIME="${PRIME}" \
             -e SKIP_UPLOAD="${SKIP_UPLOAD}" \
             quay.io/centos/centos:stream9 rpm/scripts/rebuild-repo.sh
 

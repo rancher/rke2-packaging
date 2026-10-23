@@ -33,14 +33,14 @@ fi
 
 # Validate OS and set up base URL path
 case "$OS" in
-  "centos7")
-    BASEURL_OS="centos/7"
-    ;;
   "centos8")
     BASEURL_OS="centos/8"
     ;;
   "centos9")
     BASEURL_OS="centos/9"
+    ;;
+  "centos10")
+    BASEURL_OS="centos/10"
     ;;
   "microos")
     BASEURL_OS="microos"
@@ -48,39 +48,40 @@ case "$OS" in
   "slemicro")
     BASEURL_OS="slemicro"
     ;;
+  "sle")
+    BASEURL_OS="sle"
+    ;;
   *)
     echo "Unsupported OS: $OS, exiting"
     exit 1
     ;;
 esac
 
+# prime repos live under <os>/<arch>/prime
+REPO_SUFFIX=""
+if [ "$PRIME" = "true" ]; then
+  REPO_SUFFIX="/prime"
+fi
 
+if [ "$RPM_ARCH" = "all" ]; then
+  RPM_ARCHES="x86_64 aarch64 source"
+else
+  RPM_ARCHES="$RPM_ARCH"
+fi
 
 RKE2_REPO_VERSION=$(echo "$RPM_MAJMIN" | tr '.' '-')
-REPO_ID="rancher-rke2-${RKE2_REPO_VERSION}-${RPM_CHANNEL}"
 
 REPO_DOMAIN=${RKE2_REPO_DOMAIN:-"rpm.rancher.io"}
 if [ "${RPM_CHANNEL}" = "testing" ]; then
   REPO_DOMAIN="rpm-testing.rancher.io"
 fi
 
-REPO_BASEURL="https://${REPO_DOMAIN}/rke2/${RPM_CHANNEL}/${RPM_MAJMIN}/${BASEURL_OS}/${RPM_ARCH}"
-TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/$BASEURL_OS/$RPM_ARCH"
-
-cat << EOF > /etc/yum.repos.d/${REPO_ID}.repo
-[${REPO_ID}]
-name=Rancher RKE2 ${RPM_MAJMIN} ${RPM_CHANNEL}
-baseurl=${REPO_BASEURL}
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://${REPO_DOMAIN}/public.key
-EOF
-
+# keys and passphrases must not end up in the xtrace output
+set +x
 case "$RPM_CHANNEL" in
 "testing")
   export PRIVATE_KEY_PASS_PHRASE=$TESTING_PRIVATE_KEY_PASS_PHRASE
-  if [[ -n "$TESTING_PRIVATE_KEY" ]] && grep "BEGIN PGP PRIVATE KEY BLOCK" <<<"$TESTING_PRIVATE_KEY"; then
+  if [[ -n "$TESTING_PRIVATE_KEY" ]] && grep -q "BEGIN PGP PRIVATE KEY BLOCK" <<<"$TESTING_PRIVATE_KEY"; then
     echo "$TESTING_PRIVATE_KEY" >key.gpg
     gpg --batch --passphrase "$PRIVATE_KEY_PASS_PHRASE" --import key.gpg
   else
@@ -104,7 +105,7 @@ case "$RPM_CHANNEL" in
   ;;
 
 "latest" | "stable")
-  if [[ -n "$PRIVATE_KEY" ]] && grep "BEGIN PGP PRIVATE KEY BLOCK" <<<"$PRIVATE_KEY"; then
+  if [[ -n "$PRIVATE_KEY" ]] && grep -q "BEGIN PGP PRIVATE KEY BLOCK" <<<"$PRIVATE_KEY"; then
     echo "$PRIVATE_KEY" >key.gpg
     gpg --batch --passphrase "$PRIVATE_KEY_PASS_PHRASE" --import key.gpg
   else
@@ -129,77 +130,105 @@ case "$RPM_CHANNEL" in
   ;;
 esac
 
-WORK_DIR="./dist"
-mkdir -p "$WORK_DIR"
-
-echo "Working directory: $WORK_DIR"
-echo "Repository ID: $REPO_ID"
-echo "Repo baseurl: $REPO_BASEURL"
-echo "Target S3 Path: s3://$AWS_S3_BUCKET/$TARGET_S3_PATH"
-
-if ! reposync \
-  --repoid "$REPO_ID" \
-  --download-path "$WORK_DIR" \
-  -y; then
-  echo "reposync exited with non-zero code, continuing with available RPMs"
-fi
-
-REPO_DIR="$WORK_DIR/$REPO_ID"
-if [ ! -d "$REPO_DIR" ]; then
-  echo "$REPO_DIR was not created, exiting"
-  exit 1
-fi
-
-RPM_COUNT=$(find "$REPO_DIR" -name "*.rpm" | wc -l)
-if [ "$RPM_COUNT" -eq 0 ]; then
-  echo "no rpm files found in $REPO_DIR, exiting"
-  exit 1
-fi
-
-echo "Downloaded $RPM_COUNT rpms to $REPO_DIR"
-
-createrepo_c --checksum sha256 "$REPO_DIR"
-
-REPODATA_DIR="$REPO_DIR/repodata"
-REPOMD_FILE="$REPODATA_DIR/repomd.xml"
-
-if [ ! -d "$REPODATA_DIR" ]; then
-  echo "repodata directory not created, exiting"
-  exit 1
-fi
-
-if [ ! -f "$REPOMD_FILE" ]; then
-  echo "repomd.xml not created, exiting"
-  exit 1
-fi
-
 if [[ -z "$PRIVATE_KEY_PASS_PHRASE" || ! -f "key.gpg" ]]; then
   echo "missing private key or passphrase, exiting"
   exit 1
 fi
+set -x
 
-echo "signing repomd.xml"
-gpg \
-  --batch --yes \
-  --pinentry-mode loopback \
-  --passphrase "$PRIVATE_KEY_PASS_PHRASE" \
-  --force-v3-sigs --verbose \
-  --detach-sign --armor \
-  -u "ci@rancher.com" \
-  "$REPOMD_FILE"
+WORK_DIR="./dist"
+mkdir -p "$WORK_DIR"
 
-if [ "$SKIP_UPLOAD" = "true" ]; then
-  echo "skipping s3 upload, repodata staged at $REPODATA_DIR"
-  exit 0
-fi
+echo "Working directory: $WORK_DIR"
 
-echo "uploading repodata to bucket"
-aws s3 sync "$REPODATA_DIR" "s3://$AWS_S3_BUCKET/$TARGET_S3_PATH/repodata" \
-  --delete \
-  --exclude "*" \
-  --include "*.xml" \
-  --include "*.xml.asc" \
-  --include "*.sqlite*" \
-  --include "*.gz"
+upload_repodata() {
+  aws s3 sync "$1" "$2" \
+    --delete \
+    --exclude "*" \
+    --include "*.xml" \
+    --include "*.xml.asc" \
+    --include "*.sqlite*" \
+    --include "*.gz"
+}
 
-echo "Uploaded repodata to s3://$AWS_S3_BUCKET/$TARGET_S3_PATH/repodata"
+rebuild_arch() {
+  local ARCH=$1
+  local REPO_ID="rancher-rke2-${RKE2_REPO_VERSION}-${RPM_CHANNEL}-${ARCH}${REPO_SUFFIX/\//-}"
+  local REPO_BASEURL="https://${REPO_DOMAIN}/rke2/${RPM_CHANNEL}/${RPM_MAJMIN}/${BASEURL_OS}/${ARCH}${REPO_SUFFIX}"
+  local TARGET_S3_PATH="rke2/$RPM_CHANNEL/$RPM_MAJMIN/$BASEURL_OS/$ARCH$REPO_SUFFIX"
+  local REPO_DIR="$WORK_DIR/$REPO_ID"
+  local REPODATA_DIR="$REPO_DIR/repodata"
+  local REPOMD_FILE="$REPODATA_DIR/repomd.xml"
+
+  cat << EOF > /etc/yum.repos.d/${REPO_ID}.repo
+[${REPO_ID}]
+name=Rancher RKE2 ${RPM_MAJMIN} ${RPM_CHANNEL} ${ARCH}
+baseurl=${REPO_BASEURL}
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://${REPO_DOMAIN}/public.key
+EOF
+
+  echo "Repository ID: $REPO_ID"
+  echo "Repo baseurl: $REPO_BASEURL"
+  echo "Target S3 Path: s3://$AWS_S3_BUCKET/$TARGET_S3_PATH"
+
+  if ! reposync \
+    --repoid "$REPO_ID" \
+    --download-path "$WORK_DIR" \
+    -y; then
+    echo "reposync exited with non-zero code, continuing with available RPMs"
+  fi
+
+  if [ ! -d "$REPO_DIR" ]; then
+    echo "$REPO_DIR was not created, exiting"
+    exit 1
+  fi
+
+  local RPM_COUNT
+  RPM_COUNT=$(find "$REPO_DIR" -name "*.rpm" | wc -l)
+  if [ "$RPM_COUNT" -eq 0 ]; then
+    echo "no rpm files found in $REPO_DIR, exiting"
+    exit 1
+  fi
+
+  echo "Downloaded $RPM_COUNT rpms to $REPO_DIR"
+
+  createrepo_c --checksum sha256 "$REPO_DIR"
+
+  if [ ! -d "$REPODATA_DIR" ]; then
+    echo "repodata directory not created, exiting"
+    exit 1
+  fi
+
+  if [ ! -f "$REPOMD_FILE" ]; then
+    echo "repomd.xml not created, exiting"
+    exit 1
+  fi
+
+  echo "signing repomd.xml"
+  set +x
+  gpg \
+    --batch --yes \
+    --pinentry-mode loopback \
+    --passphrase "$PRIVATE_KEY_PASS_PHRASE" \
+    --force-v3-sigs --verbose \
+    --detach-sign --armor \
+    -u "ci@rancher.com" \
+    "$REPOMD_FILE"
+  set -x
+
+  if [ "$SKIP_UPLOAD" = "true" ]; then
+    echo "skipping s3 upload, repodata staged at $REPODATA_DIR"
+    return
+  fi
+
+  echo "uploading repodata to bucket"
+  upload_repodata "$REPODATA_DIR" "s3://$AWS_S3_BUCKET/$TARGET_S3_PATH/repodata"
+  echo "Uploaded repodata to s3://$AWS_S3_BUCKET/$TARGET_S3_PATH/repodata"
+}
+
+for ARCH in $RPM_ARCHES; do
+  rebuild_arch "$ARCH"
+done

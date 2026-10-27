@@ -1,0 +1,160 @@
+name: Publish RPM repositories
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+      release-assets:
+        default: false
+        type: boolean
+
+jobs:
+  target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate publication target
+        env:
+          TAG: ${{ inputs.tag }}
+          RPM_REPOSITORY: ${{ inputs.repository }}
+          RELEASE_ASSETS: ${{ inputs.release-assets }}
+        shell: bash
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][a-zA-Z0-9.]+)?\+rke2r[0-9]+\.(latest|stable|testing)\.[0-9]+$ ]]; then
+            echo "Invalid packaging tag: $TAG" >&2
+            exit 1
+          fi
+          case "$RPM_REPOSITORY" in
+            community | prime) ;;
+            *) echo "Invalid repository mode: $RPM_REPOSITORY" >&2; exit 1 ;;
+          esac
+          if [[ "$RELEASE_ASSETS" == true && "$RPM_REPOSITORY" != community ]]; then
+            echo "GitHub release assets require a community publication" >&2
+            exit 1
+          fi
+
+  publish:
+    needs: target
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - centos8
+          - centos9
+          - centos10
+          - microos
+          - slemicro
+          - sle
+        arch:
+          - amd64
+          - srcrpm
+          - arm64
+        include:
+          - arch: srcrpm
+            build: x86_64-amd64
+            rpmarch: source
+          - arch: amd64
+            build: x86_64-amd64
+            rpmarch: x86_64
+          - arch: arm64
+            build: aarch64-arm64
+            rpmarch: aarch64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # The triggering commit, so a manual Prime publication of an older
+          # tag builds it with the current packaging scripts.
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Read secrets
+        uses: rancher-eio/read-vault-secrets@0da85151ad1f19ed7986c41587e45aac1ace74b6 # v3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          secrets: |
+            secret/data/github/repo/${{ github.repository }}/private-key/credentials privateKey | PRIVATE_KEY ;
+            secret/data/github/repo/${{ github.repository }}/private-key-pass-phrase/credentials token | PRIVATE_KEY_PASS_PHRASE ;
+            secret/data/github/repo/${{ github.repository }}/testing-private-key/credentials privateKey | TESTING_PRIVATE_KEY ;
+            secret/data/github/repo/${{ github.repository }}/testing-private-key-pass-phrase/credentials token | TESTING_PRIVATE_KEY_PASS_PHRASE ;
+            secret/data/github/repo/${{ github.repository }}/aws-s3-bucket/credentials token | AWS_S3_BUCKET ;
+            secret/data/github/repo/${{ github.repository }}/aws-access-key-id/credentials token | AWS_ACCESS_KEY_ID ;
+            secret/data/github/repo/${{ github.repository }}/aws-secret-access-key/credentials token | AWS_SECRET_ACCESS_KEY ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-s3-bucket/credentials token | TESTING_AWS_S3_BUCKET ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-access-key-id/credentials token | TESTING_AWS_ACCESS_KEY_ID ;
+            secret/data/github/repo/${{ github.repository }}/testing-aws-secret-access-key/credentials token | TESTING_AWS_SECRET_ACCESS_KEY ;
+
+      - name: Build
+        env:
+          TAG: ${{ inputs.tag }}
+          COMBARCH: ${{ matrix.build }}
+          OS: ${{ matrix.os }}
+          RPM_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          docker buildx build \
+            --target result \
+            --output=. \
+            --build-arg TAG="${TAG}" \
+            --build-arg SCRIPT=build \
+            --build-arg RPM_REPOSITORY="${RPM_REPOSITORY}" \
+            --build-arg COMBARCH="${COMBARCH}" \
+            -f "Dockerfile.${OS}" .
+
+      - name: Sign and upload to S3
+        env:
+          TAG: ${{ inputs.tag }}
+          COMBARCH: ${{ matrix.build }}
+          UPLOAD_ARCH: ${{ matrix.arch }}
+          RPM_OS: ${{ matrix.os }}
+          RPM_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          docker run --rm \
+            -v "$(pwd):/workspace" \
+            -w /workspace \
+            -e TAG \
+            -e SOURCE="/workspace" \
+            -e PRIVATE_KEY \
+            -e PRIVATE_KEY_PASS_PHRASE \
+            -e TESTING_PRIVATE_KEY \
+            -e TESTING_PRIVATE_KEY_PASS_PHRASE \
+            -e COMBARCH \
+            -e UPLOAD_ARCH \
+            -e RPM_OS \
+            -e RPM_REPOSITORY \
+            -e AWS_S3_BUCKET \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e TESTING_AWS_S3_BUCKET \
+            -e TESTING_AWS_ACCESS_KEY_ID \
+            -e TESTING_AWS_SECRET_ACCESS_KEY \
+            quay.io/centos/centos:stream9 \
+            bash rpm/scripts/sign-and-upload.sh
+
+      - name: Checksum basic release packages
+        if: ${{ inputs.release-assets }}
+        env:
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          RPMARCH: ${{ matrix.rpmarch }}
+        run: |
+          cd "dist/${OS}/${RPMARCH}"
+          sha256sum *.rpm > "sha256sum-${OS}-${ARCH}.txt"
+
+      - name: Upload basic packages to GitHub
+        if: ${{ inputs.release-assets }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          RPMARCH: ${{ matrix.rpmarch }}
+        run: |
+          cd "dist/${OS}/${RPMARCH}"
+          gh release upload "$TAG" *.rpm "sha256sum-${OS}-${ARCH}.txt"

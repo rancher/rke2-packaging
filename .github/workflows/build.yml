@@ -8,6 +8,15 @@ name: Build
 permissions:
     contents: read
 jobs:
+  build-rpm-sle:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      with:
+        fetch-depth: 0
+    - name: build-rpm
+      run: make all-sle-build
   build-rpm-el8:
     runs-on: ubuntu-latest
     steps:

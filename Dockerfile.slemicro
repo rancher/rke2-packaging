@@ -3,7 +3,7 @@ FROM ${OPENSUSE} AS build
 
 RUN zypper install -y rpm-build git jq rpmdevtools systemd
 
-ENV SOURCE=/source
+ENV SOURCE=/source RPM_OS=slemicro
 
 WORKDIR ${SOURCE}
 
@@ -11,9 +11,10 @@ COPY . .
 
 ARG COMBARCH
 ARG TAG
+ARG RPM_REPOSITORY=community
 ARG SCRIPT=build
 
-RUN ${SOURCE}/rpm/slemicro/scripts/entry "${SCRIPT}"
+RUN bash ${SOURCE}/rpm/scripts/entry.sh "${SCRIPT}"
 
 FROM scratch AS result
 ENV SOURCE=/source

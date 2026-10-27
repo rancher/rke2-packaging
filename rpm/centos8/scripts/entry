@@ -1,8 +1,0 @@
-#!/bin/bash
-set -ex
-
-if [ -e ./rpm/centos8/scripts/"$1" ]; then
-    ./rpm/centos8/scripts/"$@"
-else
-    exec "$@"
-fi
